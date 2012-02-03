@@ -379,7 +379,7 @@ sim_reg_options(struct opt_odb_t *odb)
 
   opt_reg_string(odb, "-cache:dl1",
 		 "l1 data cache config, i.e., {<config>|none}",
-		 &cache_dl1_opt, "dl1:128:64:4:l",
+		 &cache_dl1_opt, "dl1:64:64:4:l",
 		 /* print */TRUE, NULL);
 
   opt_reg_int(odb, "-cache:dl1lat",
@@ -399,7 +399,7 @@ sim_reg_options(struct opt_odb_t *odb)
 
   opt_reg_string(odb, "-cache:il1",
 		 "l1 inst cache config, i.e., {<config>|dl1|dl2|none}",
-		 &cache_il1_opt, "il1:128:64:4:l",
+		 &cache_il1_opt, "il1:64:64:4:l",
 		 /* print */TRUE, NULL);
 
   opt_reg_int(odb, "-cache:il1lat",
