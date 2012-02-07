@@ -727,9 +727,10 @@ cost_term(int edge_id, int bpred)
     e = tcfg_edges[edge_id];
     tcfg_edge_str(e, bpred);
 
-    if (enable_icache)
-		  num_hm = num_hit_miss[tcfg_edges[edge_id]->dst->id];
-    else
+    // Yao: num_hit_miss is uninitialized.
+//    if (enable_icache)
+//		  num_hm = num_hit_miss[tcfg_edges[edge_id]->dst->id];
+//    else
 		  num_hm = 1;
 
     for (i = 0; i < num_hm; i++) {
@@ -1162,9 +1163,11 @@ static void scp_dcache_cost(void) {
     //dat_inst_t  *d_inst;
     int         coldms = 0;
     //print cold miss penalty each time the program enters a loop
-    for (i=1; i<num_tcfg_loops; i++) {
-        coldms  += lp_coldms[i];
-    }
+    //for (i=1; i<num_tcfg_loops; i++) {
+    //    coldms  += lp_coldms[i];
+    //}
+    // Yao: lp_coldms is not set and initialized.
+    coldms = 0;
     fprintf(filp," + %d d%s_0",coldms*l1, start_str);
     //print dcache miss penalty for each data instruction
     for (i=0; i<num_tcfg_nodes; i++) {

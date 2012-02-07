@@ -49,9 +49,9 @@ extern char *run_opt;
 extern FILE *filp, *fusr;
 
 int	    bpred_scheme;
-int	    enable_icache = 1;
-int     enable_scp_dcache = 1;      /* Enable scope-aware dcache analysis*/
-int     enable_scp_dl2cache = 1;    /* Enable scope-aware level 2 dcache analysis */
+int	    enable_icache = 0;
+int     enable_scp_dcache = 0;      /* Enable scope-aware dcache analysis*/
+int     enable_scp_dl2cache = 0;    /* Enable scope-aware level 2 dcache analysis */
 int 	enable_dcache = 0;	    /* For anabling dcache analysis */
 int 	enable_il2cache = 0;		/* For enabling level 2 icache analysis */	
 int 	enable_ul2cache = 0;		/* For enabling level 2 ucache analysis */	
