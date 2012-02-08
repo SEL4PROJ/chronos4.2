@@ -506,15 +506,11 @@ void markLoop( inf_proc_t *ip, inf_node_t *head, inf_node_t *ib, int lpid, char 
   // In case of nested loops, we rely on the assumption that the inner loop will have larger entry ID.
   // Update only if the new information is for the deeper level.
   if( ib->loop_id == -1 || inf_loops[ib->loop_id].entry < lp->entry ) {
-    //printf( "Set (%d.%d)  loop:%d  entry:%d  bound:%d\n", ip->proc->id, ib->bb->id, lpid, lp->entry, lp->bound );
     ib->loop_id = lpid;
 
     // propagate to tcfg nodes
     for( ndlink = bbi_map[ip->proc->id][ib->bb->id]; ndlink != NULL; ndlink = ndlink->next )
       setLoopID( ndlink->bbi, lpid );
-  }
-  else {
-    printf( "Nested (%d.%d)  loop:%d  entry:%x  (not updated)\n", ip->proc->id, ib->bb->id, ib->loop_id, inf_loops[ib->loop_id].entry );
   }
   (*checked)[ib->bb->id] = 1;
   //if( ib->bb->loop_role == LOOP_HEAD )
@@ -526,7 +522,9 @@ void markLoop( inf_proc_t *ip, inf_node_t *head, inf_node_t *ib, int lpid, char 
     int pre = ib->bb->in[i]->src->id;
     //HBK: > or >= , can entry node considered in-loop?
     //Consider entry node in loop because it also executed LB times
-    if( !(*checked)[pre] && pre >= lp->entry )
+    // Yao: lp->entry may not be the smallest node
+    tcfg_node_t *bbi = bbi_map[ip->proc->id][pre]->bbi;
+    if( !(*checked)[pre] && loop_map[bbi->id]->id == lpid /*pre >= lp->entry*/ )
       markLoop( ip, head, &(ip->inf_cfg[pre]), lpid, checked );
   }
 }

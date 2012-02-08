@@ -252,7 +252,6 @@ path_analysis(char *fName)
                 loops[0]->bound = 1;
         }
         /********************************************/
-
         if (enable_icache) {
                 /*
                  * TODO: store loop_id, loop_bound
@@ -266,12 +265,12 @@ path_analysis(char *fName)
                         old_loop_bound[i] = loops[i]->bound;
                 }
                 /******************************************/
-                // virtual_unroll();
+                //virtual_unroll();
                 /* recollect the tcfg edges as the transformed CFG has been
                  * augmented after virtual unrolling */
-                collect_tcfg_edges();
-                build_bbi_map();
-                loop_process();
+                //collect_tcfg_edges();
+                //build_bbi_map();
+                //loop_process();
                 /*
                  *  find topological order of all tcfg nodes
                  *  topo_tcfg[topo_id] = tcfg_id
@@ -287,7 +286,7 @@ path_analysis(char *fName)
                         cfg_node_t* head_bb = head->bb;
                         inf_proc_t* iproc = &(inf_procs[head_bb->proc->id]);
                         inf_node_t* ihead = &(iproc->inf_cfg[head_bb->id]);
-                        lp->bound = getIbLB(ihead) - 1;
+                        lp->bound = getIbLB(ihead);// - 1;
                 }
                 loops[0]->bound = 1; //TODO: test here
                 /*****************************************/

@@ -728,9 +728,9 @@ cost_term(int edge_id, int bpred)
     tcfg_edge_str(e, bpred);
 
     // Yao: num_hit_miss is uninitialized.
-//    if (enable_icache)
-//		  num_hm = num_hit_miss[tcfg_edges[edge_id]->dst->id];
-//    else
+    if (enable_icache)
+		  num_hm = num_hit_miss[tcfg_edges[edge_id]->dst->id];
+    else
 		  num_hm = 1;
 
     for (i = 0; i < num_hm; i++) {
@@ -2530,13 +2530,16 @@ constraints(void)
     init_var_grps();
 
     fprintf(filp, "Maximize\n\n");
-    cost_func();
+    //cost_func();
+    scp_const_func();
     fprintf(filp, "\n\nSubject to\n\n");
 
     if (bpred_scheme != NO_BPRED)
         bpred_misses();
+/*
     if (enable_icache)
         cache_misses();
+*/
     fprintf(filp, "\n");
 
     // tcfg flow constraints
@@ -2547,7 +2550,7 @@ constraints(void)
         btg_cons();
         tcfg_bfg_cons();
     }
-
+/*
     if (enable_icache) {
         cache_cons();
         if (bpred_scheme != NO_BPRED)
@@ -2558,15 +2561,18 @@ constraints(void)
     if(enable_dcache || enable_il2cache) {
         tcfg_estunit_cons_ps(); 
     }
-
+*/
+    scp_context_cons();
+/*
     if (enable_scp_dcache) {
         scp_dcache_cons();
     }
-
+*/
     /* vivy: infeasible path constraints */
+/*
     if( enable_infeas )
         infeas_cons();
-
+*/
     // user constraints
     generate_cons_from_imm(); // JIT generation...
 
@@ -2575,7 +2581,9 @@ constraints(void)
 
     // user constraints
     //user_cons();
+/*
     user_cons_context();
+*/
 
     write_vars();
 }

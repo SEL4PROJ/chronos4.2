@@ -1007,7 +1007,7 @@ ctx_unit_time(int edge_id, int bp, int contextMask)
 
     t_cpred = &cpred_times[edge_id][0];
     t_mpred = &mpred_times[edge_id][0];
-    //int* t_context = &extend_cpred_times[edge_id][contextMask][0];
+    int* t_context = &extend_cpred_times[edge_id][contextMask][0];
 
     if (enable_icache)
         set_body_hitmiss(edge_id, 0, contextMask);
@@ -1048,6 +1048,8 @@ ctx_unit_time(int edge_id, int bp, int contextMask)
 		    *t_cpred = t;
 		if ((bp == BP_MPRED) && (t > *t_mpred))
 		    *t_mpred = t;
+                if ((bp == BP_CPRED) && (t > *t_context))
+                    *t_context = t;
 		unit_estimated = 1;
 	    }
 	}
@@ -1063,6 +1065,8 @@ ctx_unit_time(int edge_id, int bp, int contextMask)
 	    *t_cpred = t;
 	if ((bp == BP_MPRED) && (t > *t_mpred))
 	    *t_mpred = t;
+        if ((bp == BP_CPRED) && (t > *t_context))
+            *t_context = t;
     }
 }
 
