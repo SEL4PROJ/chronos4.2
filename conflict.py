@@ -104,6 +104,8 @@ def process_conflict(fout, conflict_file):
         if kind_str == '':
             break;
         kind_str = kind_str.strip()
+        if kind_str[0] == '#':
+            continue
 
         if kind_str == 'times':
             n = f.readline();
