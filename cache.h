@@ -116,9 +116,9 @@ struct mem_blk_set
 typedef struct mem_blk_set mem_blk_set_t;
 
 /* Abstract cache block */
-struct cache_block {
+/*struct cache_block {
 	mem_blk_set_t* mem_blk_h;
-};
+};*/
 
 struct ovr_mapping {
 	unsigned old;
@@ -155,8 +155,8 @@ enum ANALYSIS {
 
 typedef enum ACCESS ACCESS_T;
 typedef enum ANALYSIS ANALYSIS_T;
-typedef struct cache_block* acs_p;
-typedef struct cache_block acs_s;
+typedef mem_blk_set_t* acs_p;
+typedef mem_blk_set_t acs_s;
 
 struct tcfg_node;
 #ifndef TCFG_NODE_T_DEFINED

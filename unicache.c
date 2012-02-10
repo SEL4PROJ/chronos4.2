@@ -68,7 +68,7 @@ void printAcs(acs_p** acs_print) {
 			if (acs_set_print != NULL) {
 				if (acs_set_print[i] != NULL
 					)
-					mem_blk_h_print = acs_set_print[i]->mem_blk_h;
+					mem_blk_h_print = acs_set_print[i];
 				else
 					printf("-");
 			} else
@@ -118,10 +118,7 @@ void freeCacheLine(acs_p acl) {
 	if (!acl)
 		return;
 
-	freeMemBlock(acl->mem_blk_h);
-	acl->mem_blk_h = NULL;
-
-	free(acl);
+	freeMemBlock(acl);
 }
 
 /* Free an abstract cache set */
@@ -194,7 +191,7 @@ acs_p makeEmpty(void) {
 	ret = (acs_p) malloc(sizeof(acs_s));
 	CHECK_MEM(ret);
 	/* Nothing in the cache block */
-	ret->mem_blk_h = NULL;
+	// ret->mem_blk_h = NULL;
 
 	return ret;
 }
@@ -223,7 +220,7 @@ int checkForInclusionSingle(acs_p* acs_in, mem_blk_set_t* mem_blk_set) {
 		for (iter = mem_blk_set; iter; iter = iter->next) {
 			if (!acs_in[i])
 				continue;
-			else if (isResident(acs_in[i]->mem_blk_h, iter))
+			else if (isResident(acs_in[i], iter))
 				break;
 		}
 		if (iter) {
@@ -248,23 +245,18 @@ int getCardinality(mem_blk_set_t* mem_blk_set) {
 
 /* Make a copy of the cache block */
 acs_p makeCopy(acs_p acs_in) {
-	acs_p ret;
+	acs_p ret = NULL;
 	mem_blk_set_t* iter;
 
 	if (!acs_in)
 		return NULL;
 
-	ret = (acs_p) malloc(sizeof(acs_s));
-	CHECK_MEM(ret);
-	memset(ret, 0, sizeof(acs_s));
-	ret->mem_blk_h = NULL;
-
-	for (iter = acs_in->mem_blk_h; iter; iter = iter->next) {
+	for (iter = acs_in; iter; iter = iter->next) {
 		mem_blk_set_t* temp = (mem_blk_set_t *) malloc(sizeof(mem_blk_set_t));
 		CHECK_MEM(temp);
 		temp->block = iter->block;
-		temp->next = ret->mem_blk_h;
-		ret->mem_blk_h = temp;
+		temp->next = ret;
+		ret = temp;
 	}
 
 	return ret;
@@ -272,23 +264,18 @@ acs_p makeCopy(acs_p acs_in) {
 
 /* Make a cache block from a set of memory blocks */
 acs_p makeCacheBlock(mem_blk_set_t* mem_blk_set) {
-	acs_p ret;
+	acs_p ret = NULL;
 	mem_blk_set_t* iter;
 
 	if (!mem_blk_set)
 		return NULL;
 
-	ret = (acs_p) malloc(sizeof(acs_s));
-	CHECK_MEM(ret);
-	memset(ret, 0, sizeof(acs_s));
-	ret->mem_blk_h = NULL;
-
 	for (iter = mem_blk_set; iter; iter = iter->next) {
 		mem_blk_set_t* temp = (mem_blk_set_t *) malloc(sizeof(mem_blk_set_t));
 		CHECK_MEM(temp);
 		temp->block = iter->block;
-		temp->next = ret->mem_blk_h;
-		ret->mem_blk_h = temp;
+		temp->next = ret;
+		ret = temp;
 	}
 
 	return ret;
@@ -297,26 +284,24 @@ acs_p makeCacheBlock(mem_blk_set_t* mem_blk_set) {
 /* Set intersection of the contents of two cache blocks */
 /* and return the result */
 acs_p Intersect(acs_p acs1, acs_p acs2) {
-	acs_p ret;
+	acs_p ret = NULL;
 	mem_blk_set_t* iter;
 
 	if (!acs1 || !acs2)
 		return NULL;
 
-	ret = makeEmpty();
-
-	for (iter = acs2->mem_blk_h; iter; iter = iter->next) {
+	for (iter = acs2; iter; iter = iter->next) {
 		/* If the cache block is present in both of the 
 		 * argument cache blocks, then it is present in 
 		 * the return cache block. Useful for must 
 		 * analysis */
-		if (isResident(acs1->mem_blk_h, iter)) {
+		if (isResident(acs1, iter)) {
 			mem_blk_set_t* temp = (mem_blk_set_t *) malloc(
 					sizeof(mem_blk_set_t));
 			CHECK_MEM(temp);
 			temp->block = iter->block;
-			temp->next = ret->mem_blk_h;
-			ret->mem_blk_h = temp;
+			temp->next = ret;
+			ret  = temp;
 		}
 	}
 
@@ -326,31 +311,23 @@ acs_p Intersect(acs_p acs1, acs_p acs2) {
 /* Set union of the contents of two cache blocks */
 /* and return the result */
 acs_p Union(acs_p acs1, acs_p acs2) {
-	acs_p ret;
+	acs_p ret = NULL;
 	mem_blk_set_t* iter;
 
 	if (!acs1 && !acs2)
 		return NULL;
 
-	/* Copy the first cache block */
-	ret = makeCopy(acs1);
-
 	if (!acs2)
 		return ret;
 
-	for (iter = acs2->mem_blk_h; iter; iter = iter->next) {
-		if (!ret) {
-			ret = (acs_p) malloc(sizeof(acs_s));
-			CHECK_MEM(ret);
-			ret->mem_blk_h = NULL;
-		}
-		if (!isResident(ret->mem_blk_h, iter)) {
+	for (iter = acs2; iter; iter = iter->next) {
+		if (!isResident(ret, iter)) {
 			mem_blk_set_t* temp = (mem_blk_set_t *) malloc(
 					sizeof(mem_blk_set_t));
 			CHECK_MEM(temp);
 			temp->block = iter->block;
-			temp->next = ret->mem_blk_h;
-			ret->mem_blk_h = temp;
+			temp->next = ret;
+			ret = temp;
 		}
 	}
 
@@ -366,21 +343,14 @@ acs_p UnionCacheMem(acs_p acs1, mem_blk_set_t* mem_blk_set) {
 	if (!mem_blk_set)
 		return acs1;
 
-	/* Copy the first cache block */
-	ret = makeCopy(acs1);
-
 	for (iter = mem_blk_set; iter; iter = iter->next) {
-		if (!ret) {
-			ret = (acs_p) malloc(sizeof(acs_s));
-			memset(ret, 0, sizeof(acs_s));
-		}
-		if (!isResident(ret->mem_blk_h, iter)) {
+		if (!isResident(ret, iter)) {
 			mem_blk_set_t* temp = (mem_blk_set_t *) malloc(
 					sizeof(mem_blk_set_t));
 			CHECK_MEM(temp);
 			temp->block = iter->block;
-			temp->next = ret->mem_blk_h;
-			ret->mem_blk_h = temp;
+			temp->next = ret;
+			ret = temp;
 		}
 	}
 
@@ -439,7 +409,7 @@ int checkForOnePresence(acs_p** acs_in, mem_blk_set_t* mem_blk_set) {
 	for (iter = mem_blk_set; iter; iter = iter->next) {
 		k = GET_SET(iter->block);
 		for (i = 0; i < CACHE_SET_SIZE; i++) {
-			if (acs_in[k][i] && isResident(acs_in[k][i]->mem_blk_h, iter))
+			if (acs_in[k][i] && isResident(acs_in[k][i], iter))
 				return 1;
 		}
 	}
@@ -459,7 +429,7 @@ int checkForPresence(acs_p** acs_in, mem_blk_set_t* mem_blk_set) {
 
 		for (i = 0; i < CACHE_SET_SIZE; i++) {
 			if (acs_in[k] && acs_in[k][i]
-					&& isResident(acs_in[k][i]->mem_blk_h, iter))
+					&& isResident(acs_in[k][i], iter))
 				break;
 		}
 
@@ -482,7 +452,7 @@ int checkForVictim(acs_p** acs_in, mem_blk_set_t* mem_blk_set) {
 	for (iter = mem_blk_set; iter; iter = iter->next) {
 		for (i = 0; i < MAX_CACHE_SET; i++) {
 			if (acs_in[i][PSEUDO]
-					&& isResident(acs_in[i][PSEUDO]->mem_blk_h, iter))
+					&& isResident(acs_in[i][PSEUDO], iter))
 				return 1;
 		}
 	}
@@ -499,7 +469,7 @@ int checkForInclusion(acs_p* acs_in, mem_blk_set_t* mem_blk_set) {
 
 	for (i = 0; i < CACHE_SET_SIZE; i++) {
 		for (iter = mem_blk_set; iter; iter = iter->next) {
-			if (acs_in[i] && !isResident(acs_in[i]->mem_blk_h, iter))
+			if (acs_in[i] && !isResident(acs_in[i], iter))
 				break;
 		}
 		if (!iter)
@@ -537,23 +507,19 @@ mem_blk_set_t* getMemoryBlockOfSet(mem_blk_set_t* mem_blk, int set) {
 /* Take the set difference of a cache line and a memory block */
 acs_p Difference(acs_p acs, mem_blk_set_t* mem_blk) {
 	mem_blk_set_t* iter;
-	acs_p ret;
+	acs_p ret = NULL;
 
 	if (!acs)
 		return NULL;
 
-	ret = (acs_p) malloc(sizeof(acs_s));
-	CHECK_MEM(ret);
-	ret->mem_blk_h = NULL;
-
-	for (iter = acs->mem_blk_h; iter; iter = iter->next) {
+	for (iter = acs; iter; iter = iter->next) {
 		if (iter->block != mem_blk->block) {
 			mem_blk_set_t* temp = (mem_blk_set_t *) malloc(
 					sizeof(mem_blk_set_t));
 			CHECK_MEM(temp);
 			temp->block = iter->block;
-			temp->next = ret->mem_blk_h;
-			ret->mem_blk_h = temp;
+			temp->next = ret;
+			ret = temp;
 		}
 	}
 
@@ -600,7 +566,7 @@ acs_p* update_singleton(acs_p* acs, mem_blk_set_t* mem_blk_set) {
 			break;
 		}
 		/* block is present in the cache line */
-		if (acs[line] && isResident(acs[line]->mem_blk_h, temp))
+		if (acs[line] && isResident(acs[line], temp))
 			break;
 	}
 
@@ -727,9 +693,9 @@ acs_p* joinCacheMay(acs_p* acs1, acs_p* arg) {
 
 		/* PRESENT in ACS-0 but not in ACS-1 */
 		if (acs1[i]) {
-			for (iter = acs1[i]->mem_blk_h; iter; iter = iter->next) {
+			for (iter = acs1[i]; iter; iter = iter->next) {
 				for (j = i - 1; j >= 0; j--) {
-					if (arg[j] && isResident(arg[j]->mem_blk_h, iter)) {
+					if (arg[j] && isResident(arg[j], iter)) {
 						break;
 					}
 				}
@@ -751,9 +717,9 @@ acs_p* joinCacheMay(acs_p* acs1, acs_p* arg) {
 		}
 		/* PRESENT in ACS-1 but not in ACS-0 */
 		if (arg[i]) {
-			for (iter = arg[i]->mem_blk_h; iter; iter = iter->next) {
+			for (iter = arg[i]; iter; iter = iter->next) {
 				for (j = i - 1; j >= 0; j--) {
-					if (acs1[j] && isResident(acs1[j]->mem_blk_h, iter)) {
+					if (acs1[j] && isResident(acs1[j], iter)) {
 						break;
 					}
 				}
@@ -797,9 +763,9 @@ acs_p* joinCachePS(acs_p* acs1, acs_p* arg) {
 		val = NULL;
 
 		if (acs1[i]) {
-			for (iter = acs1[i]->mem_blk_h; iter; iter = iter->next) {
+			for (iter = acs1[i]; iter; iter = iter->next) {
 				for (j = i + 1; j <= CACHE_SET_SIZE; j++) {
-					if (arg[j] && isResident(arg[j]->mem_blk_h, iter)) {
+					if (arg[j] && isResident(arg[j], iter)) {
 						break;
 					}
 				}
@@ -821,9 +787,9 @@ acs_p* joinCachePS(acs_p* acs1, acs_p* arg) {
 			}
 		}
 		if (arg[i]) {
-			for (iter = arg[i]->mem_blk_h; iter; iter = iter->next) {
+			for (iter = arg[i]; iter; iter = iter->next) {
 				for (j = i + 1; j <= CACHE_SET_SIZE; j++) {
-					if (acs1[j] && isResident(acs1[j]->mem_blk_h, iter)) {
+					if (acs1[j] && isResident(acs1[j], iter)) {
 						break;
 					}
 				}
@@ -921,12 +887,12 @@ int is_same_cache_block(acs_p acs1, acs_p acs2) {
 	if (!acs1 || !acs2)
 		return 0;
 
-	for (iter = acs1->mem_blk_h; iter; iter = iter->next) {
-		if (!isResident(acs2->mem_blk_h, iter))
+	for (iter = acs1; iter; iter = iter->next) {
+		if (!isResident(acs2, iter))
 			return 0;
 	}
 
-	if (getCardinality(acs1->mem_blk_h) == getCardinality(acs2->mem_blk_h))
+	if (getCardinality(acs1) == getCardinality(acs2))
 		return 1;
 
 	return 0;
