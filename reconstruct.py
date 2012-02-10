@@ -18,6 +18,8 @@ tcfg_to_bb_map = {}
 global total_edges
 total_edges = 0
 
+global elf_file
+
 def read_variables(input_filename):
     var_re = re.compile(r'^d(\d+|Sta)_(\d+)\s+([\d.]+)$')
 
@@ -99,7 +101,7 @@ def addr2line(addr):
     if addr2line_proc is None:
         addr2line_proc = Popen(
             ['arm-none-eabi-addr2line', '-fe',
-            '/home/yaoshi/quoll/test-case/seL4-kernel-beagle.elf'],
+            elf_file],
             stdin=PIPE, stdout=PIPE, close_fds=True
         )
 
@@ -249,10 +251,11 @@ def follow():
 
 
 if __name__ == '__main__':
-    if len(sys.argv) != 3:
-        print "Usage: reconstruct <solution file> <tcfg map file>"
+    if len(sys.argv) != 4:
+        print "Usage: reconstruct <solution file> <tcfg map file> <ELF file>"
         sys.exit(1)
 
+    elf_file = sys.argv[3]
     read_variables(sys.argv[1])
     read_tcfg_map(sys.argv[2])
 

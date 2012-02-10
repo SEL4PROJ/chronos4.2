@@ -290,7 +290,7 @@ sim_reg_options(struct opt_odb_t *odb)
 	      /* print */TRUE, /* format */NULL);
 
   opt_reg_int(odb, "-fetch:mplat", "extra branch mis-prediction latency",
-	      &ruu_branch_penalty, /* default */0,
+	      &ruu_branch_penalty, /* default */10,
 	      /* print */TRUE, /* format */NULL);
 
 
@@ -389,7 +389,7 @@ sim_reg_options(struct opt_odb_t *odb)
 
   opt_reg_string(odb, "-cache:dl2",
 		 "l2 data cache config, i.e., {<config>|none}",
-		 &cache_dl2_opt, "dl2:256:64:8:l",
+		 &cache_dl2_opt, "ul2:256:64:8:l",
 		 /* print */TRUE, NULL);
 
   opt_reg_int(odb, "-cache:dl2lat",
@@ -409,7 +409,7 @@ sim_reg_options(struct opt_odb_t *odb)
 
   opt_reg_string(odb, "-cache:il2",
 		 "l2 instruction cache config, i.e., {<config>|dl2|none}",
-		 &cache_il2_opt, "il2:256:64:8:l",
+		 &cache_il2_opt, "dl2", //"ul2:256:64:8:l",
 		 /* print */TRUE, NULL);
 
   opt_reg_int(odb, "-cache:il2lat",
@@ -618,6 +618,7 @@ sim_check_options(struct opt_odb_t *odb,        /* options database */
     }
   else /* dl1 is defined */
     {
+      enable_scp_dcache = 1;
       if (sscanf(cache_dl1_opt, "%[^:]:%d:%d:%d:%c",
 		 name, &nsets_dl1, &bsize_dl1, &assoc_dl1, &c) != 5)
 		fatal("bad l1 D-cache parms: <name>:<nsets>:<bsize>:<assoc>:<repl>");
@@ -706,6 +707,7 @@ sim_check_options(struct opt_odb_t *odb,        /* options database */
 	  enable_il2cache = 0;	  
 	else if (!mystricmp(cache_il2_opt, "dl2"))
 	{
+          enable_il2cache = 1;
 	  enable_ul2cache = 1;
 #if 0
 	  if (!cache_dl2)

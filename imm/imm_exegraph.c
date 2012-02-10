@@ -240,7 +240,7 @@ mpinst_coexists(int curr, int br_inst)
 static void
 scan_coexists(void)
 {
-    int	    inst, br_inst;
+    int	    inst, br_inst = 0;
 
     for (inst = 0; inst >= 0; inst = eg_chain[inst].succ) {
 	if (eg_insts[inst]->bp_flag == BP_CPRED) {
@@ -331,6 +331,8 @@ add_inst(int inst)
                 case STR_H:
                 case STR_B:
                     extra_cycles += mem_access_cycles;
+                    if (eg_insts[inst]->inst->pc_changed)
+                        extra_cycles += ruu_branch_penalty;
                     break;
                 case LDM_L:
                     //tmp = eg_insts[inst]->inst->num_out;
