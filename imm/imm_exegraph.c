@@ -350,7 +350,7 @@ add_inst(int inst)
                 case MCR:
                     extra_cycles += 8;
                     break;
-                case MSR_CPRS:
+                case MSR_CPSR:
                     extra_cycles += 4;
                     break;
                 case ISB:
