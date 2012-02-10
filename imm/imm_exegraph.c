@@ -350,11 +350,14 @@ add_inst(int inst)
                 case MCR:
                     extra_cycles += 8;
                     break;
+                case MSR_CPRS:
+                    extra_cycles += 4;
+                    break;
                 case ISB:
-                    extra_cycles += 12;
+                    extra_cycles += 8;
                     break;
                 case DSB:
-                    extra_cycles += 28;
+                    extra_cycles += 8;
                     break;
             }
             node->lat.hi += extra_cycles;
