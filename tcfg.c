@@ -627,8 +627,9 @@ build_bbi_map(void)
 
 // transform the CFGs of the procs into a global flow graph (transformed-CFG)
 void
-prog_tran()
+prog_tran(char *obj_file)
 {
+    char s[256];
     proc_t	    *proc;
     FILE *ftcfg;
     proc = &prog.procs[prog.main_proc];
@@ -636,7 +637,8 @@ prog_tran()
     collect_tcfg_edges();
     find_backedges();
 
-    ftcfg = fopen( "tcfg.map", "w" );
+    sprintf(s, "%s.map", obj_file);
+    ftcfg = fopen(s, "w" );
     dump_tcfg( ftcfg );
     fclose( ftcfg );
 

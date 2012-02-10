@@ -203,7 +203,7 @@ path_analysis(char *fName)
     read_functions(obj_file);
 
     // transform the CFGs into a global CFG called tcfg (transformed-cfg)
-    prog_tran();
+    prog_tran(obj_file);
 
     // identify loop levels as well as block-loop mapping
     loop_process();

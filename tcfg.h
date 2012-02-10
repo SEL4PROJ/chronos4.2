@@ -123,7 +123,7 @@ struct tcfg_elink_t {
 
 
 void
-prog_tran(void);
+prog_tran(char *obj_file);
 
 
 
