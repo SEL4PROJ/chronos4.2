@@ -1981,44 +1981,12 @@ int loopSymExec(loop_t *lp, inf_proc_t *p, int mustFlag, P_Queue **outQueue) {
         p_enqueue(&pQueue,&lpHeadId,lpHeadId);
         while (!p_queue_empty(&pQueue)) { 
             cntExec++; //count total node sym.exec performed
-//            if (cntExec==1000) {
-//                printf("\nToo many iterations, no terminate?");exit(1);
-//            }
             pInt = (int*)p_dequeue(&pQueue);ibId = *pInt;
             ib = &(p->inf_cfg[ibId]);
-#if 0
-            if (dbg) {//print outgoing nodes of current node
-                fprintf(dbgExec,"\nA_ bb %d:%d (",ibId,ib->bb->id);
-                if (ib->bb->out_n) {
-                    dst = ib->bb->out_n->dst;
-                    fprintf(dbgExec,"%d,",dst->id);fflush(dbgExec);
-                }
-                if (ib->bb->out_t) {
-                    dst = ib->bb->out_t->dst;
-                    fprintf(dbgExec,"%d,",dst->id);fflush(dbgExec);
-                }
-                fprintf(dbgExec,")\n");fflush(dbgExec);
-            }
-#endif
-            //if (dbg) fprintf(dbgExec,"\nIncoming b%d ",ib->bb->id);
-            // loop_role has set in loop analysis
-#if 0
-            for (i=0; i<ib->bb->num_in; i++) {
-                inNode = &(p->inf_cfg[ib->bb->in[i]->src->id]);
-                //if (dbg) fprintf(dbgExec," b%d ",inNode->bb->id);
-                if (inNode->bb->id >= ib->bb->id) ib->bb->loop_role = LOOP_HEAD;
-            }
-#endif
-            if (ib->bb->id != lpHeadId && ib->loop_role == LOOP_HEAD) {
+            if (ib->bb->id != lpHeadId && ib->bb->loop_role == LOOP_HEAD) {
                 //ib is lpHead of an inner loop 
                 inLp = getIbLoop(ib);
                 loopSymExec(inLp,p,!visited[ib->bb->id], &pQueue);
-#if 0
-                if (dbg) {
-                    fprintf(dbgExec,"\nBack to L%d [%d,%d]",lpId,lpHeadId,lpTailId);
-                    printf("\nBack to L%d [%d,%d]",lpId,lpHeadId,lpTailId);
-                }
-#endif
                 visited[ib->bb->id] = 1;
                 continue;
             }
