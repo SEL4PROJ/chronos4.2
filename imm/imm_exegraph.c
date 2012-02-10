@@ -49,8 +49,8 @@ extern eg_chain_t	*eg_chain;
 extern int		bpred_type;
 extern loop_t		*body_loop;
 
-extern cache_t		cache;
-
+extern cache_t cache;
+extern cache_t cache_l2;
 
 // simplescalar simulator options
 extern int		LSQ_size;
@@ -63,7 +63,14 @@ extern int		ruu_inorder_issue;
 extern int		ruu_ifq_size;
 extern int		ruu_branch_penalty;
 
-extern int		enable_icache;
+extern int enable_icache;
+extern int enable_il2cache;
+extern int enable_scp_dcache;
+extern int enable_scp_dl2cache;
+extern int enable_ul2cache;
+extern int mem_lat[2];
+extern int cache_dl1_lat;
+extern int cache_dl2_lat;
 
 
 char			**data_dep;
@@ -260,20 +267,34 @@ scan_coexists(void)
 static void
 add_inst(int inst)
 {
-    int		    stage, fu, ic_flag, bbi_id, mblk_id;
+    int		    stage, fu, ic_flag, ic_flag_l2, bbi_id, mblk_id, mblk_id_l2, dc_flag, dc_flag_l2;
     egraph_node_t   *node;
 
     ic_flag = eg_insts[inst]->ic_flag;
+    ic_flag_l2 = eg_insts[inst]->ic_flag_l2;
+
     if ((ic_flag != IC_HIT) && (inst < plog_len || inst >= (plog_len + body_len) )) {
 	bbi_id = eg_insts[inst]->bbi_id;
 	mblk_id = eg_insts[inst]->mblk_id;
 	if (enable_icache == 0 || get_mblk_hitmiss(tcfg[bbi_id], mblk_id, body_loop) == IC_HIT)
 	    ic_flag = IC_HIT;
     }
+    /* set L2 CHMC flag (set ic_flag_l2) */
+    if ((ic_flag_l2 != IC_HIT) && (inst < plog_len || inst >= (plog_len + body_len))) {
+        bbi_id = eg_insts[inst]->bbi_id;
+        mblk_id_l2 = eg_insts[inst]->mblk_id_l2;
+        if ((enable_il2cache == 0 || enable_ul2cache == 0)
+             || get_mblk_hitmiss_l2(tcfg[bbi_id], mblk_id_l2, body_loop) == IC_HIT)
+            ic_flag_l2 = IC_HIT;
+    }
+
+    dc_flag = eg_insts[inst]->dc_flag;
+    dc_flag_l2 = eg_insts[inst]->dc_flag_l2;
 
     eg_insts_type[inst] = inst_type(eg_insts[inst]->inst);
     if ((eg_insts_type[inst] == INST_LOAD) || (eg_insts_type[inst] == INST_STORE))
 	eg_mem_insts[num_mem_insts++] = inst;
+
     for (stage = 0; stage < pipe_stages; stage++) {
 	node = &egraph[inst][stage];
 	node->inst = inst;
@@ -343,10 +364,63 @@ add_inst(int inst)
 	    if (ic_flag == IC_HIT) {
 		node->lat.lo = node->lat.hi = 1;
 	    } else if (ic_flag == IC_MISS) {
-		node->lat.lo = node->lat.hi = cache.cmp + 1;
+                if (ic_flag_l2 == IC_HIT) {
+                    node->lat.lo = node->lat.hi = cache.cmp + 1;
+                } else if (ic_flag_l2 == IC_MISS) {
+                    node->lat.lo = node->lat.hi = cache.cmp + cache_l2.cmp + 1;
+                } else { /* ic_flag_l2 == IC_UNCLEAR */
+                    node->lat.lo = cache.cmp + 1;
+                    node->lat.hi = cache.cmp + cache_l2.cmp + 1;
+                }
 	    } else {
-		node->lat.lo = 1; node->lat.hi = cache.cmp + 1;
+                if (ic_flag_l2 == IC_HIT) {
+                    node->lat.hi = cache.cmp + 1;
+                } else /* ic_flag_l2 == IC_MISS || ic_flag_l2 == IC_UNCLEAR */{
+                    node->lat.hi = cache.cmp + cache_l2.cmp + 1;
+                }
 	    }
+        } else if (stage == STAGE_WB) {
+            node->fu = node->num_fu = 0;
+            node->lat.hi = node->lat.lo = 1;
+            if (enable_scp_dcache) {
+                if (dc_flag == DC_STORE) {
+                    node->lat.lo = mem_lat[0];
+                    node->lat.hi = cache_dl1_lat + mem_lat[0];
+                    if (enable_scp_dl2cache || enable_ul2cache) {
+                        if (dc_flag_l2 == DC_STORE) {
+                            node->lat.hi = cache_dl1_lat + cache_dl2_lat
+                                           + mem_lat[0];
+                        }
+                    }
+                } else if (dc_flag == DC_HIT) {
+                    node->lat.lo = node->lat.hi = cache_dl1_lat;
+                } else if (dc_flag == DC_MISS) {
+                    node->lat.lo = node->lat.hi = cache_dl1_lat + mem_lat[0];
+                    if (enable_scp_dl2cache || enable_ul2cache) {
+                        if (dc_flag_l2 == DC_HIT) {
+                            node->lat.lo = node->lat.hi = cache_dl1_lat + cache_dl2_lat;
+                        } else if (dc_flag_l2 == DC_MISS) {
+                            node->lat.lo = node->lat.hi = cache_dl1_lat
+                                                          + cache_dl2_lat + mem_lat[0];
+                        } else if (dc_flag_l2 == DC_UNCLEAR) {
+                            node->lat.lo = cache_dl1_lat + cache_dl2_lat;
+                            node->lat.hi = cache_dl1_lat + cache_dl2_lat
+                                                          + mem_lat[0];
+                        }
+                    }
+                } else if (dc_flag == DC_UNCLEAR) {
+                    node->lat.lo = cache_dl1_lat;
+                    node->lat.hi = cache_dl1_lat + mem_lat[0];
+                    if (enable_scp_dl2cache || enable_ul2cache) {
+                        if (dc_flag_l2 == DC_HIT) {
+                            node->lat.hi = cache_dl1_lat + cache_dl2_lat;
+                        } else {
+                            node->lat.hi = cache_dl1_lat + cache_dl2_lat
+                                           + mem_lat[0];
+                        }
+                    }
+                }
+            }
 	} else {
 	    node->fu = node->num_fu = 0;
 	    node->lat.hi = node->lat.lo = 1;

@@ -131,7 +131,7 @@ int compress_icache_addrs;
 /* memory access latency (<first_chunk> <inter_chunk>) */
 int mem_nelt = 2;
 int mem_lat[2] =
-  { /* lat to first chunk */100, /* lat between remaining chunks */100 };
+  { /* lat to first chunk */96, /* lat between remaining chunks */96 };
 
 /* memory access bus width (in bytes) */
 int mem_bus_width;
@@ -394,7 +394,7 @@ sim_reg_options(struct opt_odb_t *odb)
 
   opt_reg_int(odb, "-cache:dl2lat",
 	      "l2 data cache hit latency (in cycles)",
-	      &cache_dl2_lat, /* default */12,
+	      &cache_dl2_lat, /* default */26,
 	      /* print */TRUE, /* format */NULL);
 
   opt_reg_string(odb, "-cache:il1",
@@ -414,7 +414,7 @@ sim_reg_options(struct opt_odb_t *odb)
 
   opt_reg_int(odb, "-cache:il2lat",
 	      "l2 instruction cache hit latency (in cycles)",
-	      &cache_il2_lat, /* default */12,
+	      &cache_il2_lat, /* default */26,
 	      /* print */TRUE, /* format */NULL);
 
   /* mem options */
