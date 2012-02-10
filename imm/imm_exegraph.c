@@ -348,7 +348,7 @@ add_inst(int inst)
                     break;
                 case MRC:
                 case MCR:
-                    extra_cycles += 120;
+                    extra_cycles += 8;
                     break;
                 case ISB:
                     extra_cycles += 12;
