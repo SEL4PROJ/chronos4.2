@@ -1633,12 +1633,14 @@ void expandAddrExpr(expr_p exp, reg_t  *addrExpr) {
            strcpy(exp->value[0].para, "T" );
            exp->coef[0] = 1;
            exp->k = 0;
+           freeList(&expandList);
            return;
 /*            printf("\nPanic, exceed MAX_EXPR_LEN ");
             exit(1);*/
         }
     }
     if (dbg) {fprintf(dbgExec,"\nExpanded expr: ");printExpr(dbgExec,exp);}
+    freeList(&expandList);
 }
 
 static int known_inst = 0, unknown_inst = 0;

@@ -582,7 +582,7 @@ acs_p* copy_cache(acs_p* acs) {
 acs_p* update_singleton(acs_p* acs, mem_blk_set_t* mem_blk_set) {
 	int line = 0;
 	acs_p* ret;
-	acs_p cur;
+	acs_p cur, free_p;
 	int i;
 	mem_blk_set_t* temp = NULL;
 
@@ -624,10 +624,15 @@ acs_p* update_singleton(acs_p* acs, mem_blk_set_t* mem_blk_set) {
 		/* For May analysis */
 		if (line == 0 && acs[0]) {
 			cur = Difference(acs[0], temp);
+                        free_p = ret[1];
 			ret[1] = Union(cur, ret[1]);
 #ifdef MEM_FREE
 			freeCacheLine(cur);
 			cur = NULL;
+                        if (free_p) {
+                            freeCacheLine(free_p);
+                            free_p = NULL;
+                        }
 #endif
 		}
 	}
@@ -979,153 +984,9 @@ void transforml2InstCacheState(tcfg_node_t* bbi, int* change_flag,
 		if (!bbi->acs_out[k])
 			bbi->acs_out[k] = makeCacheSet();
 	}
-#if 0
-	/* cleekee: account for cache changes by mispredicted instructions */
-	if (bpred_scheme != NO_BPRED) {
-		acs_spec = (acs_p **) malloc(MAX_CACHE_SET * sizeof(acs_p *));
-		CHECK_MEM(acs_spec);
-		memset(acs_spec, 0, MAX_CACHE_SET * sizeof(acs_p *));
-
-		CHECK_MEM(num_mp_insts);
-		CHECK_MEM(mp_insts);
-
-		bbi_in_p = bbi->in;
-
-		/* iterate through every incoming edge*/
-		while (bbi_in_p != NULL) {
-			/* sudiptac: check whether first iteration, skip the speculation 
-			 * through back edge in that case */
-			is_backedge =
-					((loop_map[bbi->id] == loop_map[bbi_in_p->src->id])
-							&& (bbi == loop_map[bbi->id]->head)) ? 1 : 0;
-			if (iteration_count == 0 && is_backedge) {
-				bbi_in_p = bbi_in_p->next_in;
-				continue;
-			}
-
-			/*ipdate incoming ACS with mispredicated instructions */
-			for (n_inst = 0; n_inst < num_mp_insts[bbi_in_p->id]; n_inst++) {
-				bbi_n_inst = 0;
-
-				/* identify tcfg node that contains mp_insts */
-				if (!n_inst) {
-					if (bbi_in_p == bbi_in_p->src->out)
-						bbi_spec = bbi_in_p->next_out->dst;
-					else
-						bbi_spec = bbi_in_p->src->out->dst;
-				}
-
-				/* point bbi_spec to next tcfg node containing mp_insts */
-				if (bbi_n_inst >= bbi_spec->bb->num_inst) {
-					bbi_spec = bbi_spec->out->dst;
-					bbi_n_inst = 0;
-				}
-
-				/* Use cache access classification method */
-				if (inst_chmc_l1[bbi_spec->id][bbi_n_inst] == ALL_MISS) {
-					if (!n_inst)
-						cur_acs = update_abs_inst(bbi_in_p->src->acs_out,
-								mp_insts[bbi_in_p->id][n_inst]->addr);
-					else
-						cur_acs = update_abs_inst(cur_acs,
-								mp_insts[bbi_in_p->id][n_inst]->addr);
-				} else if (inst_chmc_l1[bbi_spec->id][bbi_n_inst]
-						== NOT_CLASSIFIED
-						|| inst_chmc_l1[bbi_spec->id][bbi_n_inst] == PS) {
-					if (!n_inst) {
-						prev_acs = bbi_in_p->src->acs_out;
-						cur_acs = update_abs_inst(bbi_in_p->src->acs_out,
-								mp_insts[bbi_in_p->id][n_inst]->addr);
-					} else {
-						prev_acs = cur_acs;
-						cur_acs = update_abs_inst(cur_acs,
-								mp_insts[bbi_in_p->id][n_inst]->addr);
-					}
-
-					for (k = 0; k < MAX_CACHE_SET; k++) {
-						cur_acs_set = cur_acs[k];
-						cur_acs[k] = joinCache(prev_acs[k], cur_acs[k], type);
-#ifdef MEM_FREE
-						freeCacheSet(cur_acs_set);
-						cur_acs_set = NULL;
-#endif
-					}
-				}
-
-				bbi_n_inst++;
-			}
-
-			/* join all incoming ACS as speculated ACS */
-			if (cur_acs && num_mp_insts[bbi_in_p->id] > 0) {
-				for (k = 0; k < MAX_CACHE_SET; k++) {
-					cur_acs_set = acs_spec[k];
-
-					acs_spec[k] = joinCache(acs_spec[k], cur_acs[k], type);
-#ifdef MEM_FREE
-					freeCacheSet(cur_acs_set);
-					cur_acs_set = NULL;
-#endif
-				}
-			}
-#ifdef MEM_FREE
-			freeCacheState(cur_acs);
-			cur_acs = NULL;
-#endif
-			bbi_in_p = bbi_in_p->next_in;
-		}
-
-		/* join speculated ACS with ACS without branch prediction */
-		for (k = 0; k < MAX_CACHE_SET; k++) {
-			if (!bbi->acs_in || !bbi->acs_in[k])
-				continue;
-
-			cur_acs_set = bbi->acs_out[k];
-
-			bbi->acs_out[k] = joinCache(acs_spec[k], bbi->acs_in[k], type);
-#ifdef MEM_FREE
-			freeCacheSet(cur_acs_set);
-			cur_acs_set = NULL;
-#endif
-		}
-#ifdef MEM_FREE
-		freeCacheState(acs_spec);
-		acs_spec = NULL;
-#endif
-	}
-#endif
 	for (n_inst = 0; n_inst < bbi->bb->num_inst; n_inst++) {
-#if 0
-		isa_name = isa[inst->op_enum].name;
-
-		/* Save a copy to check the equality between the 
-		 * previous state and the updated state. This is 
-		 * important for the iterative computaion */
-		acs_out = (acs_p **) malloc(MAX_CACHE_SET * sizeof(acs_p *));
-		memset(acs_out, 0, MAX_CACHE_SET * sizeof(acs_p *));
-
-		if(!inst->acs_out)
-		{
-			inst->acs_out = (acs_p **) malloc(MAX_CACHE_SET * sizeof(acs_p *));
-			memset(inst->acs_out, 0, MAX_CACHE_SET * sizeof(acs_p *));
-		}
-
-		for(k = 0; k < MAX_CACHE_SET; k++)
-		{
-			acs_out[k] = copy_cache(inst->acs_out[k]);
-
-			if(!inst->acs_out[k])
-			{
-				inst->acs_out[k] = makeCacheSet();
-			}
-		}
-#endif
-
 		/* Use cache access classification method */
 		if (inst_chmc_l1[bbi->id][n_inst] == ALL_MISS) {
-#if 0
-			cur_acs = inst->acs_out;
-			inst->acs_out = update_abs_inst(inst->acs_in, inst->addr);
-#endif
 
 			cur_acs = bbi->acs_out;
 
@@ -1141,10 +1002,6 @@ void transforml2InstCacheState(tcfg_node_t* bbi, int* change_flag,
 #endif
 		} else if (inst_chmc_l1[bbi->id][n_inst] == NOT_CLASSIFIED
 				|| inst_chmc_l1[bbi->id][n_inst] == PS) {
-#if 0
-			cur_acs = inst->acs_out;
-			inst->acs_out = update_abs_inst(inst->acs_in, inst->addr);
-#endif
 			cur_acs = bbi->acs_out;
 
 			/* cleekee: bbi->acs_out is already updated if bpred is enabled */
@@ -1155,17 +1012,6 @@ void transforml2InstCacheState(tcfg_node_t* bbi, int* change_flag,
 				prev_acs = bbi->acs_out;
 				bbi->acs_out = update_abs_inst(bbi->acs_out, inst->addr);
 			}
-
-#if 0
-			for(k = 0; k < MAX_CACHE_SET; k++) {
-				cur_acs_set = inst->acs_out[k];
-				inst->acs_out[k] = joinCache(inst->acs_in[k], inst->acs_out[k], type);
-#ifdef MEM_FREE
-				freeCacheSet(cur_acs_set);
-				cur_acs_set = NULL;
-#endif
-			}
-#endif
 
 			for (k = 0; k < MAX_CACHE_SET; k++) {
 				cur_acs_set = bbi->acs_out[k];
@@ -1197,32 +1043,6 @@ void transforml2InstCacheState(tcfg_node_t* bbi, int* change_flag,
 				/* Do nothing */
 			}
 		}
-#if 0
-		else
-		{
-			for(k = 0; k < MAX_CACHE_SET; k++) {
-				cur_acs_set = inst->acs_out[k];
-				inst->acs_out[k] = copy_cache(inst->acs_in[k]);
-#ifdef MEM_FREE
-				freeCacheSet(cur_acs_set);
-				cur_acs_set = NULL;
-#endif
-			}
-		}
-		/* check whether the abstract cache states change or not */
-		for(k = 0; k < MAX_CACHE_SET; k++)
-		*change_flag |= !checkEquality(inst->acs_out[k], acs_out[k]);
-
-		/* Linking incoming and outgoing abstract cache states of two 
-		 * consecutive basic blocks */
-		if(n_inst < bbi->bb->num_inst - 1)
-		{
-			de_inst_t* next_inst = inst + 1;
-			for(k = 0; k < MAX_CACHE_SET; k++)
-			next_inst->acs_in[k] = inst->acs_out[k];
-			inst++;
-		}
-#endif
 		inst++;
 	}
 
@@ -1381,26 +1201,9 @@ void JoinCacheState(tcfg_node_t* pred, tcfg_node_t* bbi, int type) {
 	if (!pred)
 		return;
 
-#if 0
-	/* First instruction of this basic block */
-	f_inst = bbi->bb->code;
-
-	/* Last instruction of predecessor basic block */
-	l_inst = pred->bb->code + pred->bb->num_inst - 1;
-#endif
-
 	/* Get the abstract cache state at the exit point of the last
 	 * instruction of the predecessor basic block */
 	for (i = 0; i < MAX_CACHE_SET; i++) {
-#if 0
-		/* no cache state out of the last instruction of an input basic 
-		 * block */
-		if(!l_inst->acs_out[i])
-		continue;
-		free_p = f_inst->acs_in[i];
-		f_inst->acs_in[i] = joinCache(f_inst->acs_in[i], l_inst->acs_out[i], type);
-#endif
-
 		if (!pred->acs_out || !pred->acs_out[i])
 			continue;
 
@@ -1422,34 +1225,12 @@ void JoinCacheState(tcfg_node_t* pred, tcfg_node_t* bbi, int type) {
  * management. "cleanupCache" procedure is used for this purpose 
  */
 void initializeCache(tcfg_node_t* bbi) {
-
 	bbi->acs_in = (acs_p **) malloc(MAX_CACHE_SET * sizeof(acs_p *));
 	CHECK_MEM(bbi->acs_in);
 	memset(bbi->acs_in, 0, MAX_CACHE_SET * sizeof(acs_p *));
 	bbi->acs_out = (acs_p **) malloc(MAX_CACHE_SET * sizeof(acs_p *));
 	CHECK_MEM(bbi->acs_out);
 	memset(bbi->acs_out, 0, MAX_CACHE_SET * sizeof(acs_p *));
-
-	//for (i = 0; i < MAX_CACHE_SET; i++)
-	//bbi->acs_in[i] = makeCacheSet();
-#if 0		  
-	assert(inst);
-
-	for(j = 0; j < bbi->bb->num_inst; j++)
-	{
-		inst->acs_in = (acs_p **)malloc(MAX_CACHE_SET * sizeof(acs_p *));
-		memset(inst->acs_in, 0, MAX_CACHE_SET * sizeof(acs_p *));
-		inst->acs_out = (acs_p **)malloc(MAX_CACHE_SET * sizeof(acs_p *));
-		memset(inst->acs_out, 0, MAX_CACHE_SET * sizeof(acs_p *));
-		inst++;
-	}
-	inst = bbi->bb->code;
-	for(i = 0; i < MAX_CACHE_SET; i++)
-	{
-		inst->acs_in[i] = makeCacheSet();
-	}
-#endif
-
 }
 
 /* Allocate memory for storing CHMC information of an instruction */
@@ -1500,11 +1281,6 @@ void categorize_l2_inst_X_PS_NC(tcfg_node_t* bbi, de_inst_t* inst,
 	temp.block = GET_MEM(inst->addr);
 	temp.next = NULL;
 
-#if 0
-	h1 = checkForVictim(inst->acs_in, &temp);
-	temp.block = GET_MEM(inst->addr + SIZE_OF_WORD);
-	h2 = checkForVictim(inst->acs_in, &temp);
-#endif
 	h1 = checkForVictim(bbi->acs_in, &temp);
 	temp.block = GET_MEM(inst->addr + SIZE_OF_WORD);
 	h2 = checkForVictim(bbi->acs_in, &temp);
@@ -1529,12 +1305,6 @@ void categorize_l2_inst_X_AH_NC(tcfg_node_t* bbi, de_inst_t* inst,
 
 	temp.block = GET_MEM(inst->addr);
 	temp.next = NULL;
-
-#if 0
-	h1 = checkForPresence(inst->acs_in, &temp);
-	temp.block = GET_MEM(inst->addr + SIZE_OF_WORD);
-	h2 = checkForPresence(inst->acs_in, &temp);
-#endif
 
 	h1 = checkForPresence(bbi->acs_in, &temp);
 	hc1 = checkForConflicts(bbi, inst, h1, 1, &conflicts);
@@ -1571,12 +1341,6 @@ void categorize_l2_inst_X_AM_NC(tcfg_node_t* bbi, de_inst_t* inst,
 	temp.block = GET_MEM(inst->addr);
 	temp.next = NULL;
 
-#if 0
-	h1 = checkForPresence(inst->acs_in, &temp);
-	temp.block = GET_MEM(inst->addr + SIZE_OF_WORD);
-	h2 = checkForPresence(inst->acs_in, &temp);
-#endif
-
 	h1 = checkForPresence(bbi->acs_in, &temp);
 	hc1 = checkForConflicts(bbi, inst, h1, 1, &conflicts);
 	temp.block = GET_MEM(inst->addr + SIZE_OF_WORD);
@@ -1604,12 +1368,6 @@ void categorize_inst_AH_NC(tcfg_node_t* bbi, de_inst_t* inst,
 	temp.block = GET_MEM(inst->addr);
 	temp.next = NULL;
 
-#if 0
-	h1 = checkForPresence(inst->acs_in, &temp);
-	temp.block = GET_MEM(inst->addr + SIZE_OF_WORD);
-	h2 = checkForPresence(inst->acs_in, &temp);
-#endif
-
 	h1 = checkForPresence(bbi->acs_in, &temp);
 	hc1 = checkForConflicts(bbi, inst, h1, 1, &conflicts);
 	temp.block = GET_MEM(inst->addr + SIZE_OF_WORD);
@@ -1636,11 +1394,6 @@ void categorize_inst_PS_NC(tcfg_node_t* bbi, de_inst_t* inst,
 	temp.block = GET_MEM(inst->addr);
 	temp.next = NULL;
 
-#if 0
-	h1 = checkForVictim(inst->acs_in, &temp);
-	temp.block = GET_MEM(inst->addr + SIZE_OF_WORD);
-	h2 = checkForVictim(inst->acs_in, &temp);
-#endif		  
 	h1 = checkForVictim(bbi->acs_in, &temp);
 	temp.block = GET_MEM(inst->addr + SIZE_OF_WORD);
 	h2 = checkForVictim(bbi->acs_in, &temp);
@@ -1663,12 +1416,6 @@ void categorize_inst_AM_NC(tcfg_node_t* bbi, de_inst_t* inst,
 
 	temp.block = GET_MEM(inst->addr);
 	temp.next = NULL;
-
-#if 0
-	h1 = checkForPresence(inst->acs_in, &temp);
-	temp.block = GET_MEM(inst->addr + SIZE_OF_WORD);
-	h2 = checkForPresence(inst->acs_in, &temp);
-#endif
 
 	h1 = checkForPresence(bbi->acs_in, &temp);
 	hc1 = checkForConflicts(bbi, inst, h1, 1, &conflicts);
@@ -1758,36 +1505,37 @@ void categorize_L1(int type) {
 /* clean up the cache, this section is called before starting 
  * a new cache analysis */
 void cleanupCache(void) {
-	int i;
+	int i, j;
+        de_inst_t *inst, *prev_inst;
 
 	for (i = 0; i < num_tcfg_nodes; i++) {
-#if 0
 		inst = tcfg[i]->bb->code;
 		prev_inst = NULL;
-#endif
 
 #ifdef MEM_FREE
 		freeCacheState(tcfg[i]->acs_in);
 		freeCacheState(tcfg[i]->acs_out);
+                tcfg[i]->acs_in = NULL;
+                tcfg[i]->acs_out = NULL;
 #endif
 
-#if 0
 		for(j = 0; j < tcfg[i]->bb->num_inst; j++)
 		{
 #ifdef MEM_FREE
 			freeCacheState(inst->acs_out);
+                        freeCacheState(inst->acs_in);
 #endif
 			inst->acs_out = NULL;
+                        inst->acs_in = NULL;
 			/* CAUTION :::: since the input abstract cache state of previous 
 			 * instruction and the output abstract cache state of this 
 			 * instruction are connected, there is no need to do a double 
 			 * memory free */
 			if (prev_inst)
-			prev_inst->acs_in = NULL;
+			    prev_inst->acs_in = NULL;
 			prev_inst = inst;
 			inst++;
 		}
-#endif
 	}
 }
 
@@ -1851,16 +1599,6 @@ void analyze_abs_instr_cache(int type) {
 		for (i = 0; i < num_tcfg_nodes; i++) {
 			/* sudiptac: get the topological index */
 			topoidx = topo_tcfg[i];
-#if 0
-			/* cleekee: previous acs_in should be cleared first*/
-			/* sudiptac: what about loops ? */
-			for(j = 0; j < MAX_CACHE_SET; j++) {
-#ifdef   MEM_FREE
-				freeCacheSet(tcfg[i]->acs_in[j]);
-#endif
-				tcfg[i]->acs_in[j]=NULL;
-			}
-#endif
 #ifdef _DEBUG_CRPD
 			fprintf(stdout, "computing cache states of bbi %d (%d.%d)\n", topoidx, tcfg[topoidx]->bb->proc->id, \
 					tcfg[topoidx]->bb->id);
@@ -1926,10 +1664,5 @@ void analyze_abs_instr_cache_all() {
 		/* Do persistence analysis in L2 instruction cache */
 		//analyze_abs_l2_instr_cache(PERSISTENCE);
 	}
-
-#if 0
-	/* Print categorization of all instructions */
-	print_classification();
-#endif
 }
 

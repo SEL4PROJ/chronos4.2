@@ -360,9 +360,11 @@ int p_queue_empty(P_Queue **headList) {
 void* removeOneFromWorkList(worklist_p* Wlist)
 {
 	worklist_p temp = *Wlist;
+        void *data = temp->data;
 	*Wlist = (*Wlist)->next;
+        free(temp);
 	
-	return temp->data;
+	return data;
 }
 
 /* Add one item to the worklist */

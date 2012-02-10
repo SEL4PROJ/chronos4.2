@@ -524,7 +524,8 @@ void markLoop( inf_proc_t *ip, inf_node_t *head, inf_node_t *ib, int lpid, char 
     //Consider entry node in loop because it also executed LB times
     // Yao: lp->entry may not be the smallest node
     tcfg_node_t *bbi = bbi_map[ip->proc->id][pre]->bbi;
-    if( !(*checked)[pre] && loop_map[bbi->id]->id == lpid /*pre >= lp->entry*/ )
+    if( !(*checked)[pre] && loop_map[bbi->id] && 
+        loop_map[bbi->id]->id == lpid /*pre >= lp->entry*/ )
       markLoop( ip, head, &(ip->inf_cfg[pre]), lpid, checked );
   }
 }
