@@ -281,6 +281,7 @@ void readInstr( char *obj_file ) {
 
   inf_proc_t *ip;
   inf_node_t *ib;
+  tcfg_node_t *bbi;
 
   // for call graph construction
   int n, len;
@@ -302,6 +303,7 @@ void readInstr( char *obj_file ) {
     for( j = 0; j < ip->num_bb; j++ ) {
       b  = &(p->cfg[j]);
       ib = &(ip->inf_cfg[j]);
+      bbi = bbi_map[i][j]->bbi;
 
       ib->bb = b;
       ib->num_insn = b->num_inst;
@@ -309,7 +311,7 @@ void readInstr( char *obj_file ) {
       ib->num_assign = 0;
       ib->assignlist = NULL;
       ib->branch = NULL;
-      ib->loop_id = -1;
+      ib->loop_id = (loop_map[bbi->id] == NULL)?0:loop_map[bbi->id]->id;
       ib->exec_count = -1;
 
       for( k = 0; k < ib->num_insn; k++ ) {
@@ -576,7 +578,7 @@ int readBlockCounts( char *imm_file ) {
 
   num_inf_loops = num_tcfg_loops;
   inf_loops = calloc(num_inf_loops, sizeof(*inf_loops));
-
+/*
   for( pid = 0; pid < prog.num_procs; pid++ ) {
     if( include_proc[pid] ) {
       ip = &(inf_procs[pid]);
@@ -584,7 +586,7 @@ int readBlockCounts( char *imm_file ) {
         ip->inf_cfg[bid].loop_id = -1;
     }
   }
-
+*/
   f = fopen(imm_file, "r" );
   while(fgets(tmp, sizeof(tmp), f) != NULL) {
     int ret;
@@ -661,6 +663,7 @@ int readBlockCounts( char *imm_file ) {
               loops[lpid]->head->bb->id == bid);
       loops[lpid]->count = count;
 
+#if 0
       // mark all blocks in the loop body
       // traverse from tail upwards until head is found; all traversed block is in the loop
       lpn = loop_map[bbi_map[pid][bid]->bbi->id];
@@ -681,6 +684,7 @@ int readBlockCounts( char *imm_file ) {
       checked = (char*) calloc( ip->num_bb, sizeof(char) );
       markLoop( ip, hd, ta, lpid, &checked );
       free( checked );
+#endif
     }
   }
   fclose( f );
