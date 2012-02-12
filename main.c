@@ -578,6 +578,8 @@ main(int argc, char **argv){
 		  exit(1);
     }
 
+    init_cache_hit_list();
+
     init_isa();
     
 	 /* read options including (1) actions; (2) processor configuration */

@@ -1,4 +1,7 @@
 #ifdef __cplusplus
+
+#define CACHE_HIT_LIST_FILENAME "cache_hit"
+
 extern "C" {
 #endif
 
@@ -13,6 +16,10 @@ extern "C" {
     int global_memory_query(unsigned addr, long *value);
 
     int local_memory_query(unsigned addr, long *value);
+
+    int cache_hit_p(unsigned addr);
+
+    void init_cache_hit_list(void);
 
 #ifdef __cplusplus
 }

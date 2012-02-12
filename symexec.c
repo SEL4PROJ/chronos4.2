@@ -1708,7 +1708,10 @@ static void readSymExecResult(inf_node_t *ib) {
             dat->addr_set   = NULL;
             dat->resideLpId = getIbLoop(ib)->id;
 
-            if (insn->op_enum == STM_U || insn->op_enum == LDM_L) {
+            if (cache_hit_p(insn->addr)) {
+                setInt(&exprReg, FIXED_HIT_ADDRESS);
+            }
+            else if (insn->op_enum == STM_U || insn->op_enum == LDM_L) {
                 if (listOut[r1].t != VALUE_CONST || reg_access[r1] == REG_ACCESSED)
                     setInt(&exprReg, FIXED_HIT_ADDRESS);
                 else

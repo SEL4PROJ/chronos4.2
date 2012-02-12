@@ -27,7 +27,7 @@
 #include "cache.h"
 #include "bpred.h"
 #include "loops.h"
-
+#include "mem_value.h"
 
 extern prog_t	    prog;
 extern int	    num_tcfg_nodes;
@@ -586,12 +586,22 @@ cache_analysis()
 int
 get_mblk_hitmiss(tcfg_node_t* bbi, int mblk_id, loop_t* lp)
 {
+                  unsigned    addr, sa = bbi->bb->sa;
                   cfg_node_t* bb = bbi->bb;
                   de_inst_t* inst;
                   int mblk;
                   int i;
 
                   inst = bb->code;
+
+                  addr = sa;
+                  while (addr < sa + bbi->bb->size && MBLK_ID(sa, addr) != mblk_id) 
+                      addr += 4; 
+                  while (addr < sa + bbi->bb->size && MBLK_ID(sa, addr) == mblk_id) {
+                      if (cache_hit_p(addr))
+                          return IC_HIT;
+                      addr += 4;
+                  }
 
                   for(i = 0; i < bb->num_inst; i++)
                   {
