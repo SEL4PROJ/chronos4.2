@@ -290,7 +290,7 @@ sim_reg_options(struct opt_odb_t *odb)
 	      /* print */TRUE, /* format */NULL);
 
   opt_reg_int(odb, "-fetch:mplat", "extra branch mis-prediction latency",
-	      &ruu_branch_penalty, /* default */10,
+	      &ruu_branch_penalty, /* default */5,
 	      /* print */TRUE, /* format */NULL);
 
 
@@ -372,14 +372,14 @@ sim_reg_options(struct opt_odb_t *odb)
 
   opt_reg_int(odb, "-lsq:size",
 	      "load/store queue (LSQ) size",
-	      &LSQ_size, /* default */2,
+	      &LSQ_size, /* default */1,
 	      /* print */TRUE, /* format */NULL);
 
   /* cache options */
 
   opt_reg_string(odb, "-cache:dl1",
 		 "l1 data cache config, i.e., {<config>|none}",
-		 &cache_dl1_opt, "dl1:64:64:4:l",
+		 &cache_dl1_opt, "dl1:128:32:1:l",
 		 /* print */TRUE, NULL);
 
   opt_reg_int(odb, "-cache:dl1lat",
@@ -389,7 +389,7 @@ sim_reg_options(struct opt_odb_t *odb)
 
   opt_reg_string(odb, "-cache:dl2",
 		 "l2 data cache config, i.e., {<config>|none}",
-		 &cache_dl2_opt, "ul2:256:64:8:l",
+		 &cache_dl2_opt, "ul2:512:32:1:l",
 		 /* print */TRUE, NULL);
 
   opt_reg_int(odb, "-cache:dl2lat",
@@ -399,7 +399,7 @@ sim_reg_options(struct opt_odb_t *odb)
 
   opt_reg_string(odb, "-cache:il1",
 		 "l1 inst cache config, i.e., {<config>|dl1|dl2|none}",
-		 &cache_il1_opt, "il1:64:64:4:l",
+		 &cache_il1_opt, "il1:128:32:1:l",
 		 /* print */TRUE, NULL);
 
   opt_reg_int(odb, "-cache:il1lat",
