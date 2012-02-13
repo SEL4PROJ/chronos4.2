@@ -335,14 +335,14 @@ sim_reg_options(struct opt_odb_t *odb)
 
   opt_reg_int(odb, "-decode:width",
 	      "instruction decode B/W (insts/cycle)",
-	      &ruu_decode_width, /* default */2,
+	      &ruu_decode_width, /* default */1,
 	      /* print */TRUE, /* format */NULL);
 
   /* issue options */
 
   opt_reg_int(odb, "-issue:width",
 	      "instruction issue B/W (insts/cycle)",
-	      &ruu_issue_width, /* default */2,
+	      &ruu_issue_width, /* default */1,
 	      /* print */TRUE, /* format */NULL);
 
   opt_reg_flag(odb, "-issue:inorder", "run pipeline with in-order issue",
@@ -358,21 +358,21 @@ sim_reg_options(struct opt_odb_t *odb)
 
   opt_reg_int(odb, "-commit:width",
 	      "instruction commit B/W (insts/cycle)",
-	      &ruu_commit_width, /* default */2,
+	      &ruu_commit_width, /* default */1,
 	      /* print */TRUE, /* format */NULL);
 
   /* register scheduler options */
 
   opt_reg_int(odb, "-ruu:size",
 	      "register update unit (RUU) size",
-	      &RUU_size, /* default */8,
+	      &RUU_size, /* default */2,
 	      /* print */TRUE, /* format */NULL);
 
   /* memory scheduler options  */
 
   opt_reg_int(odb, "-lsq:size",
 	      "load/store queue (LSQ) size",
-	      &LSQ_size, /* default */8,
+	      &LSQ_size, /* default */2,
 	      /* print */TRUE, /* format */NULL);
 
   /* cache options */
