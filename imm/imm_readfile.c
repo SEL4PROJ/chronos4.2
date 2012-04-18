@@ -373,7 +373,7 @@ decode_instruction_line(const char *line, prog_t *prog)
 {
     int ret;
     const char *s = line;
-    char tmpbuf[10];
+    char tmpbuf[20];
     char mnemonic[10];
     char condcode[10];
     char setstatus[10];
