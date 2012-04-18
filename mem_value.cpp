@@ -1,7 +1,7 @@
 #include "mem_value.h"
 #include <stdio.h>
-#include <hash_map>
-#include <hash_set>
+#include <ext/hash_map>
+#include <ext/hash_set>
 
 using __gnu_cxx::hash_map;
 using __gnu_cxx::hash_set;
