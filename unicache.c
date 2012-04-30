@@ -359,7 +359,8 @@ acs_p UnionCacheMem(acs_p acs1, mem_blk_set_t* mem_blk_set) {
 
 /* check number of conflicting memory blocks with memory block containing 
  * instruction "cinst" inside basic block bbi */
-int checkForConflicts(tcfg_node_t* bbi, de_inst_t* cinst, int age,
+static int
+checkForConflicts(tcfg_node_t* bbi, de_inst_t* cinst, int age,
 		char first_word, int *conflicts) {
 	cfg_node_t* bb = bbi->bb;
 	de_inst_t* inst = bb->code;
@@ -373,21 +374,20 @@ int checkForConflicts(tcfg_node_t* bbi, de_inst_t* cinst, int age,
 	else
 		cblk = GET_MEM(cinst->addr + SIZE_OF_WORD);
 
-	while (inst != cinst) {
-		blk = GET_MEM(inst->addr);
+	// There used to be a loop here that would go through each instruction
+	// in the basic block. Instead, all we need to know is how many entire
+	// cache lines lie between inst and cinst, divided by the number of
+	// cache sets to give the number of conflicting lines.
+	assert(cinst->addr >= inst->addr);
+	shift = (cinst->addr - inst->addr)/(MAX_CACHE_SET*SIZE_OF_BLOCK);
 
-		if (GET_SET(blk) == GET_SET(cblk) && blk != cblk) {
-			/* sudiptac: make sure that you do not count multiple 
-			 * conflicts from the same memory block */
-			if (blk != prev_blk)
-				shift++;
-			prev_blk = blk;
-		} else if (blk == cblk) {
-			age = shift = 0;
-			break;
-		}
-
-		inst++;
+	// age=0 if the cinst is in the first cache line of the bb
+	// the inst!=cinst is there to match the behaviour of the old loop,
+	// but that seems like a bug - i think it might be safe to remove that
+	// condition and get lower wcets.
+	if (inst != cinst && GET_MEM(inst->addr) == cblk) {
+		age = 0;
+		assert(shift == 0);
 	}
 
 	*conflicts = age + shift;
