@@ -225,7 +225,7 @@ sym_loadsyms(char *fname)
 {
   int i, debug_cnt;
   FILE *fobj;
-  char s[1024];
+  char s[4096];
   int num_symbols;
 
   if (syms_loaded)
@@ -258,7 +258,7 @@ sym_loadsyms(char *fname)
   /* convert symbols to internal format */
   while (fgets(s, sizeof(s), fobj) != NULL) {
     int ret;
-    char sym_name[1024];
+    char sym_name[4096];
     unsigned long address;
     unsigned long size;
     char flags[32];
