@@ -553,11 +553,17 @@ dump_loops(void)
 	if (y == tcfg[0])
 	    printf("%d.%d: \t%d[start - end]\n",
 		    bbi_pid(x), bbi_bid(x), loop_map[i]->id);
-	else
-	    printf("%d.%d: \t%d[%d.%d - %d.%d]  / parent:%d\n",
+	else {
+	    char parent_str[128] = "<nil>";
+	    if (loop_map[i]->parent) {
+		    snprintf(parent_str, sizeof(parent_str), "%d", loop_map[i]->parent->id);
+		    parent_str[sizeof(parent_str)-1] = '\0';
+	    }
+	    printf("%d.%d: \t%d[%d.%d - %d.%d]  / parent:%s\n",
 		    bbi_pid(x), bbi_bid(x), loop_map[i]->id,
 		    bbi_pid(y), bbi_bid(y), bbi_pid(z), bbi_bid(z),
-		    loop_map[i]->parent->id);
+		    parent_str);
+    }
     }
 
     printf("The loops are:\n");
