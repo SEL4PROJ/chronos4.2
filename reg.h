@@ -17,7 +17,7 @@ typedef struct BIV *         biv_p;
 
 //NOTE: avoid using dynamic allocation, the source of all errors
 typedef struct {
-  char      name[3];
+  char      name[4];
   char      t;       // value type: expression, const, induction, parameter
   long       val;
   expr_p    expr;
