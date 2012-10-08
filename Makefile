@@ -16,7 +16,7 @@ OBJ=$(SRC:.c=.o) $(CPP_SRC:.cpp=.o)
 all: est
 
 est: $(OBJ)
-	$(CC) $(CFLAGS) -lstdc++ $^ -o $@
+	$(CC) $(CFLAGS) $^ -lstdc++ -o $@
 
 clean:
 	rm -rf .deps/
