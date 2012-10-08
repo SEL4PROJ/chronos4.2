@@ -60,7 +60,7 @@ struct loop_t {
     int             last_bb_id;
     loop_t	        *parent;
     tcfg_elink_t    *exits;
-    int		        flags;
+    long		        flags;
     int             bound;      //maximum lb        
 
     void*           biv_list;   //list of BIV in this loop
