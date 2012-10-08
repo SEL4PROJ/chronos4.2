@@ -510,11 +510,9 @@ search_common_ancestor(loop_t *x, loop_t *y)
 	}
     }
     /* liangyun */
-    /* 
     fprintf(stderr, "Oops, no common ancestor for two loops: %d, %d is found!\n",
 	    x->id, y->id);
     exit(1);
-    */
 }
 
 
@@ -561,6 +559,17 @@ dump_loops(void)
 		    bbi_pid(y), bbi_bid(y), bbi_pid(z), bbi_bid(z),
 		    loop_map[i]->parent->id);
     }
+
+    printf("The loops are:\n");
+    for (i = 0; i < num_tcfg_loops; i++) {
+        tcfg_node_t *h = loops[i]->head;
+        printf("Loop %2d: head bb is [%d.%d]0x%x, parent loop is ",
+                i, bbi_pid(h), bbi_bid(h), h->bb->sa);
+        if (loops[i]->parent)
+            printf("%d\n", loops[i]->parent->id);
+        else
+            printf("nil\n");
+    }
 }
 
 
@@ -573,7 +582,11 @@ dump_loop_comm_ances(void)
     printf("\ndump loop common ancestors:\n");
     for (i = 0; i < num_tcfg_loops; i++) {
 	for (j = 0; j < num_tcfg_loops; j++) {
-	    printf("%2d  ", loop_comm_ances[i][j]->id);
+	    if (loop_comm_ances[i][j] == NULL) {
+		    printf("<NO>");
+	    } else {
+		    printf("%2d  ", loop_comm_ances[i][j]->id);
+	    }
 	}
 	printf("\n");
     }
