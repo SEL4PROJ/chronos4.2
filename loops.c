@@ -512,7 +512,9 @@ search_common_ancestor(loop_t *x, loop_t *y)
     /* liangyun */
     fprintf(stderr, "Oops, no common ancestor for two loops: %d, %d is found!\n",
 	    x->id, y->id);
+#if 0
     exit(1);
+#endif
 }
 
 
