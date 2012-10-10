@@ -87,7 +87,7 @@ void printReg(FILE *fp, reg_t reg) {
     }
     fprintf(fp,"}");
 }
-static UNUSED
+UNUSED
 void printRegList(FILE *fp, reg_t *regList) {
     int i;
     for (i=0; i<NO_REG; i++) {

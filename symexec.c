@@ -1890,7 +1890,7 @@ int loopSymExec(loop_t *lp, inf_proc_t *p, int mustFlag, P_Queue **outQueue) {
     int *pInt;
     int visited[MAX_OVRL_NODES];
 
-    memset(visited, 0, MAX_OVRL_NODES);
+    memset(visited, 0, sizeof(visited));
 
     if (lp) lpHeadId = lp->head->bb->id;
     else lpHeadId = 0; //outermost loop
@@ -1943,8 +1943,8 @@ int loopSymExec(loop_t *lp, inf_proc_t *p, int mustFlag, P_Queue **outQueue) {
         if (dbg) {
             printf("\nCopy ACS from loop pre-header  c%d.%d -> c%d.%d",
                     p->proc->id,inNode->bb->id, p->proc->id, ib->bb->id);
-            //printf("\nACS pre-header c%d.%d ",p->proc->id, inNode->bb->id);
-            //printRegList(stdout,listOut);
+            printf("\nACS pre-header c%d.%d ",p->proc->id, inNode->bb->id);
+            printRegList(stdout,listOut);
         }
         copyMemList( &(ib->memListIn), inNode->memListOut);
         for (k=0; k<NO_REG; k++) {
