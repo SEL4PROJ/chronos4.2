@@ -371,11 +371,28 @@ void* removeOneFromWorkList(worklist_p* Wlist)
 void addToWorkList(worklist_p* Wlist, void* data)
 {
 	worklist_p temp = (worklist_p)malloc(sizeof(worklist_s));
-    temp->next = NULL;
 	temp->data = data;
 	temp->next = *Wlist;
 	*Wlist = temp;
 }
+
+void addToWorkList_inst_ys(worklist_p* Wlist, mem_blk_set_t* data)
+{
+        mem_blk_set_t *p1, *p2;
+        worklist_p temp = (worklist_p)malloc(sizeof(worklist_s));
+        temp->data = NULL;
+        p1 = data;
+        while (p1) {
+            p2 = malloc(sizeof(mem_blk_set_t));
+            p2->block = p1->block;
+            p2->next = temp->data;
+            temp->data = p2;
+            p1 = p1->next;
+        }
+        temp->next = *Wlist;
+        *Wlist = temp;
+}
+
 
 /* Check for empty worklist */
 int isEmpty(worklist_p Wlist)

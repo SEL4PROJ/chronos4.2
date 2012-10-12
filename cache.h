@@ -22,6 +22,7 @@
 #ifndef CACHE_H
 #define CACHE_H
 #include "address.h"
+#include "common.h"
 #define MAX_CACHE_SETS	    1024
 
 // 14-bit tag is selected for the following reason:
@@ -105,15 +106,6 @@ typedef struct {
     unsigned short  valid;  // valid == 0 means empty mempry block
     unsigned short  tag;    // memory block tag
 } mblk_tag_t;
-
-/* Describes the type for a set of memory blocks */
-struct mem_blk_set 
-{
-	unsigned block;	  
-	struct mem_blk_set* next;
-};
-
-typedef struct mem_blk_set mem_blk_set_t;
 
 /* Abstract cache block */
 /*struct cache_block {

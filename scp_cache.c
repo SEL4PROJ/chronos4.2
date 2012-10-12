@@ -1465,7 +1465,7 @@ sblk_p scp_cpySBlk(sblk_p blk) {
         ans->inst_ys_set = NULL;
         node = blk->inst_ys_set;
         for (; node != NULL; node = node->next) {
-                addToWorkList(&ans->inst_ys_set, node->data);
+                addToWorkList_inst_ys(&ans->inst_ys_set, node->data);
         }
         return ans;
 }
@@ -1480,6 +1480,23 @@ void scp_discardWorkList(worklist_p* wl) {
         *wl = NULL;
 }
 
+void scp_discardWorkList_inst_ys(worklist_p* wl) {
+        worklist_p p = *wl;
+        while (p != NULL) {
+                worklist_p t = p->next;
+                mem_blk_set_t *p1, *p2;
+                p1 = p->data;
+                while (p1) {
+                    p2 = p1->next;
+                    free(p1);
+                    p1 = p2;
+                }
+                free(p);
+                p = t;
+        }
+        *wl = NULL;
+}
+
 void scp_totally_discardWorkList(worklist_p* wl) {
         worklist_p p = *wl;
         while (p != NULL) {
@@ -1487,7 +1504,7 @@ void scp_totally_discardWorkList(worklist_p* wl) {
                 worklist_p t = p->next;
                 sblk_p s = (sblk_p)(p->data);
                 scp_discardWorkList(&s->ys_set);
-                scp_discardWorkList(&s->inst_ys_set);
+                scp_discardWorkList_inst_ys(&s->inst_ys_set);
                 p1 = s->inst_block;
                 while (p1) {
                     p2 = p1->next;
@@ -1667,7 +1684,8 @@ void scp_add2instYS(worklist_p* inst_ys, unsigned iblock) {
                 mem_blk_set_t* temp = malloc(sizeof(mem_blk_set_t));
                 temp->block = iblock;
                 temp->next = NULL;
-                addToWorkList(inst_ys, temp);
+                addToWorkList_inst_ys(inst_ys, temp);
+                free(temp);
         }
 }
 
@@ -1712,7 +1730,7 @@ void scp_union_instYS(sblk_p dst, sblk_p src) {
                         }
                 }
                 if (found == 0) {
-                        addToWorkList(&dst->inst_ys_set, s_iblock);
+                        addToWorkList_inst_ys(&dst->inst_ys_set, s_iblock);
                 }
         }
 }
@@ -1776,7 +1794,7 @@ void scp_totally_discardACS(scp_acs* p_acs) {
                         worklist_p temp = node->next;
                         sblk_p s = (sblk_p)(node->data);
                         scp_discardWorkList(&s->ys_set);
-                        scp_discardWorkList(&s->inst_ys_set);
+                        scp_discardWorkList_inst_ys(&s->inst_ys_set);
                         
                         p1 = s->inst_block;
                         while (p1) {
@@ -1863,7 +1881,7 @@ void uni_update_inst(scp_acs acs, unsigned inst_block) {
                 /*instblock 's already in ACS*/
                 /*renew scoped block: reset younger set*/
                 scp_discardWorkList(&(inst_sblk->ys_set));
-                scp_discardWorkList(&(inst_sblk->inst_ys_set));
+                scp_discardWorkList_inst_ys(&(inst_sblk->inst_ys_set));
 
                 inst_sblk->ys_set = NULL;
                 inst_sblk->inst_ys_set = NULL;
@@ -1992,7 +2010,7 @@ void scp_data_update(scp_acs acs, worklist_p addr_in, loop_t*lp) {
                                 }
                                 if (overlap == 0) {
                                         scp_discardWorkList(&(iblk->ys_set));
-                                        scp_discardWorkList(&(iblk->inst_ys_set));
+                                        scp_discardWorkList_inst_ys(&(iblk->inst_ys_set));
                                         /*reset younger set*/
                                         iblk->scp_age = 1;
                                         iblk->ys_set = NULL; // not overlap with any data reference -> renew
