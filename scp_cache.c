@@ -1446,7 +1446,17 @@ sblk_p scp_cpySBlk(sblk_p blk) {
         sblk_p ans = malloc(sizeof(sblk_s));
         ans->scp_age = blk->scp_age;
         ans->m = blk->m;
-        ans->inst_block = blk->inst_block;
+
+        // copy inst block list
+        ans->inst_block = NULL;
+        mem_blk_set_t *p = blk->inst_block;
+        while (p) {
+            mem_blk_set_t *q = malloc(sizeof(mem_blk_set_t));
+            q->block = p->block;
+            q->next = ans->inst_block;
+            ans->inst_block = q;
+            p = p->next;
+        }
         ans->ys_set = NULL;
         worklist_p node = blk->ys_set;
         for (; node != NULL; node = node->next) {
@@ -1473,10 +1483,17 @@ void scp_discardWorkList(worklist_p* wl) {
 void scp_totally_discardWorkList(worklist_p* wl) {
         worklist_p p = *wl;
         while (p != NULL) {
+                mem_blk_set_t *p1, *p2;
                 worklist_p t = p->next;
                 sblk_p s = (sblk_p)(p->data);
                 scp_discardWorkList(&s->ys_set);
                 scp_discardWorkList(&s->inst_ys_set);
+                p1 = s->inst_block;
+                while (p1) {
+                    p2 = p1->next;
+                    free(p1);
+                    p1 = p2;
+                }
                 free(p->data);
                 free(p);
                 p = t;
@@ -1755,10 +1772,19 @@ void scp_totally_discardACS(scp_acs* p_acs) {
         for (i = 0; i < MAX_CACHE_SET; i++) {
                 worklist_p node = acs[i];
                 while (node != NULL) {
+                        mem_blk_set_t *p1, *p2;
                         worklist_p temp = node->next;
                         sblk_p s = (sblk_p)(node->data);
                         scp_discardWorkList(&s->ys_set);
                         scp_discardWorkList(&s->inst_ys_set);
+                        
+                        p1 = s->inst_block;
+                        while (p1) {
+                            p2 = p1->next;
+                            free(p1);
+                            p1 = p2;
+                        }
+
                         free(node->data);
                         free(node);
                         node = temp;
