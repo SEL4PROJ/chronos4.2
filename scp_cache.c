@@ -2235,7 +2235,8 @@ void scp_analyze_loop_ps(loop_t* lp, int analysis) {
                 if (firstvisited[curnode->id] == 1)
                         firstvisited[curnode->id] = 0;
                 //scp_discardACS(curnode->mpa_acs_in);
-                //scp_totally_discardACS(&curnode->mpa_acs_in);
+                scp_totally_discardACS(&curnode->mpa_acs_in);
+                curnode->mpa_acs_in = scp_createEmptyACS();
                 //curnode->mpa_acs_in = acs_in;
                 scp_cpyACS(curnode->mpa_acs_in, acs_in);
                 scp_totally_discardACS(&acs_in);
