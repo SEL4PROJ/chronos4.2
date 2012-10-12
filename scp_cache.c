@@ -291,7 +291,6 @@ static int singletonAcc(worklist_p *addrList, saddr_p tsM, dat_inst_t* d_inst, i
                 break;
             default: //OLAP_TS
                 return 0;//not singleton access
-                //addToWorkList(addrList, mAcc);
         }
     }
     return 1;//is singleton access
@@ -1460,7 +1459,7 @@ sblk_p scp_cpySBlk(sblk_p blk) {
         ans->ys_set = NULL;
         worklist_p node = blk->ys_set;
         for (; node != NULL; node = node->next) {
-                addToWorkList(&ans->ys_set, node->data);
+                addToWorkList_ys(&ans->ys_set, node->data);
         }
         ans->inst_ys_set = NULL;
         node = blk->inst_ys_set;
@@ -1474,6 +1473,18 @@ void scp_discardWorkList(worklist_p* wl) {
         worklist_p p = *wl;
         while (p != NULL) {
                 worklist_p t = p->next;
+                free(p);
+                p = t;
+        }
+        *wl = NULL;
+}
+
+void scp_discardWorkList_ys(worklist_p* wl) {
+        worklist_p p = *wl;
+        while (p != NULL) {
+                worklist_p t = p->next;
+                if (p->data)
+                    free(p->data);
                 free(p);
                 p = t;
         }
@@ -1503,7 +1514,7 @@ void scp_totally_discardWorkList(worklist_p* wl) {
                 mem_blk_set_t *p1, *p2;
                 worklist_p t = p->next;
                 sblk_p s = (sblk_p)(p->data);
-                scp_discardWorkList(&s->ys_set);
+                scp_discardWorkList_ys(&s->ys_set);
                 scp_discardWorkList_inst_ys(&s->inst_ys_set);
                 p1 = s->inst_block;
                 while (p1) {
@@ -1664,7 +1675,7 @@ void scp_add2YS(worklist_p* ys, saddr_p address) {
                 node = node->next;
         }
         if (found == 0) {
-                addToWorkList(ys, address);
+                addToWorkList_ys(ys, address);
         }
 }
 
@@ -1708,7 +1719,7 @@ void scp_unionYS(sblk_p dst, sblk_p src) {
                 }
 
                 if (found == 0) {
-                        addToWorkList(&dst->ys_set, saddr);
+                        addToWorkList_ys(&dst->ys_set, saddr);
                 }
         }
 }
@@ -1793,7 +1804,7 @@ void scp_totally_discardACS(scp_acs* p_acs) {
                         mem_blk_set_t *p1, *p2;
                         worklist_p temp = node->next;
                         sblk_p s = (sblk_p)(node->data);
-                        scp_discardWorkList(&s->ys_set);
+                        scp_discardWorkList_ys(&s->ys_set);
                         scp_discardWorkList_inst_ys(&s->inst_ys_set);
                         
                         p1 = s->inst_block;
@@ -1880,7 +1891,7 @@ void uni_update_inst(scp_acs acs, unsigned inst_block) {
         } else {
                 /*instblock 's already in ACS*/
                 /*renew scoped block: reset younger set*/
-                scp_discardWorkList(&(inst_sblk->ys_set));
+                scp_discardWorkList_ys(&(inst_sblk->ys_set));
                 scp_discardWorkList_inst_ys(&(inst_sblk->inst_ys_set));
 
                 inst_sblk->ys_set = NULL;
@@ -2009,7 +2020,7 @@ void scp_data_update(scp_acs acs, worklist_p addr_in, loop_t*lp) {
                                         }
                                 }
                                 if (overlap == 0) {
-                                        scp_discardWorkList(&(iblk->ys_set));
+                                        scp_discardWorkList_ys(&(iblk->ys_set));
                                         scp_discardWorkList_inst_ys(&(iblk->inst_ys_set));
                                         /*reset younger set*/
                                         iblk->scp_age = 1;
@@ -2020,7 +2031,6 @@ void scp_data_update(scp_acs acs, worklist_p addr_in, loop_t*lp) {
                                         for (; node != NULL; node = node->next) {
                                                 saddr_p address = node->data;
                                                 if (scp_overlap(maddr, address, lp) == 1) { //TODO: try to replace maddr with iblk->m and check the result
-                                                        //addToWorkList(&iblk->ys_set, address); //otherwise
                                                         scp_add2YS(&(iblk->ys_set), address);
                                                 }
                                         }
@@ -2042,7 +2052,6 @@ void scp_data_update(scp_acs acs, worklist_p addr_in, loop_t*lp) {
                                 for (; node != NULL; node = node->next) {
                                         saddr_p address = node->data;
                                         if (scp_overlap(sblk->m, address, lp) == 1) {
-                                                //addToWorkList(&sblk->ys_set, address);
                                                 scp_add2YS(&(sblk->ys_set), address); //otherwise
                                         }
                                 }
@@ -2626,7 +2635,7 @@ loop_t* scp_psloop_dl(mas_inst_t* inst, int level) {
                 return NULL;
         dat_inst_t* dat = bbi->bb->d_instlist;
         dat = dat + index;
-        worklist_p addrset;
+        worklist_p addrset = NULL;
         if (level == 1)
                 addrset = bbi->addrset_l1[index];
         else if (level == 2)

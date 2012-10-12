@@ -37,17 +37,7 @@ int     estScopeSize(worklist_p tsSet, int lpId);
 #define SELF_CONFLICT   1
 #define RENEWABLE       1
 #define UNKNOWN_ADDR    -1
-struct scoped_address {
-    unsigned            blkAddr;    /*Memory block*/
-    unsigned            instAddr;   /*Inst addr*/
-    worklist_p          tsList;     /*Defined temporal scope of this memscp*/
-    worklist_p          psLoop; 
-    //worklist_p confSet;           /*Memscp that conflict with this memscp*/
-    int                 flag;   /*0: cannot renew, 1: can renew*/ 
-};
 
-typedef struct scoped_address  saddr_s;
-typedef struct scoped_address* saddr_p;
 void    printSAddr(FILE *fp, saddr_p memblk, int full);   //print one scoped mem
 void    printSAddrSet(FILE *fp, worklist_p sAddrSet,int full);//print set scpmem
 void    cpySAddr(saddr_p dst, saddr_p src);

@@ -376,6 +376,15 @@ void addToWorkList(worklist_p* Wlist, void* data)
 	*Wlist = temp;
 }
 
+void addToWorkList_ys(worklist_p* Wlist, saddr_p data)
+{
+        worklist_p temp = (worklist_p)malloc(sizeof(worklist_s));
+        temp->data = malloc(sizeof(struct scoped_address));
+        memcpy(temp->data, data, sizeof(struct scoped_address));
+        temp->next = *Wlist;
+        *Wlist = temp;
+}
+
 void addToWorkList_inst_ys(worklist_p* Wlist, mem_blk_set_t* data)
 {
         mem_blk_set_t *p1, *p2;

@@ -71,6 +71,14 @@ if ((p) == NULL) { \
 typedef unsigned long long ticks;
 #define CPU_MHZ 8000000000
 
+/* A work list for analysis */
+struct worklist {
+        void* data;
+        struct worklist* next;
+};
+typedef struct worklist worklist_s;
+typedef struct worklist* worklist_p;
+
 /* Describes the type for a set of memory blocks */
 struct mem_blk_set
 {
@@ -79,6 +87,17 @@ struct mem_blk_set
 };
 
 typedef struct mem_blk_set mem_blk_set_t;
+
+struct scoped_address {
+    unsigned            blkAddr;    /*Memory block*/
+    unsigned            instAddr;   /*Inst addr*/
+    worklist_p          tsList;     /*Defined temporal scope of this memscp*/
+    worklist_p          psLoop;
+    int                 flag;   /*0: cannot renew, 1: can renew*/
+};
+
+typedef struct scoped_address  saddr_s;
+typedef struct scoped_address* saddr_p;
 
 int hexValue (char *hexStr);
 ticks getticks(void);
@@ -187,16 +206,9 @@ copy_stack(Stack *y, Stack *x);
 int
 bits(unsigned x);
 
-/* A work list for analysis */
-struct worklist {
-	void* data;
-	struct worklist* next;
-};
-typedef struct worklist worklist_s;
-typedef struct worklist* worklist_p;
-
 int isEmpty(worklist_p Wlist);
 void addToWorkList(worklist_p* Wlist, void* data);
+void addToWorkList_ys(worklist_p* Wlist, saddr_p data);
 void addToWorkList_inst_ys(worklist_p* Wlist, mem_blk_set_t* data);
 void addAfterNode(void *data, worklist_p *prvNode, worklist_p *headNode);
 void* removeOneFromWorkList(worklist_p* Wlist);
