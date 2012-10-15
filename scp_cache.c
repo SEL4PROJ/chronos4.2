@@ -2718,6 +2718,9 @@ int get_mblk_hitmiss_ul2(tcfg_node_t* bbi, int mblk_id, loop_t* lp,
         int i;
         inst = bbi->bb->code;
         for (i = 0; i < bbi->bb->num_inst; i++) {
+                if (l2_cache_hit_p(ROUND_DOWN(bbi->bb->sa, cache_l2.ls))) {
+                        return IC_HIT;
+                }
                 int mblk = MBLK_ID_L2(bbi->bb->sa, inst->addr);
                 if (mblk == mblk_id) {
                         if (inst_psnc_ul2[bbi->id][i] == PS) {

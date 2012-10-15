@@ -8,7 +8,8 @@ using __gnu_cxx::hash_set;
 
 hash_map <unsigned, long> global_memory;
 hash_map <unsigned, long> local_memory;
-hash_set <unsigned> cache_hit_memory;
+hash_set <unsigned> l1_cache_hit_memory;
+hash_set <unsigned> l2_cache_hit_memory;
 
 void global_memory_init(void) {
     global_memory.clear();
@@ -41,15 +42,19 @@ int local_memory_query(unsigned addr, long *value) {
 }
 
 int cache_hit_p(unsigned addr) {
-    return cache_hit_memory.find(addr) == cache_hit_memory.end() ? 0:1;
+    return l1_cache_hit_memory.find(addr) == l1_cache_hit_memory.end() ? 0:1;
 }
 
-void init_cache_hit_list(void) {
+int l2_cache_hit_p(unsigned addr) {
+    return l2_cache_hit_memory.find(addr) == l2_cache_hit_memory.end() ? 0:1;
+}
+
+void
+load_hit_list(const char *filename, hash_set<unsigned> &list) {
     unsigned addr;
     int ret;
     FILE *fp;
-    cache_hit_memory.clear();
-    fp = fopen(CACHE_HIT_LIST_FILENAME, "r");
+    fp = fopen(filename, "r");
     if (fp == NULL) {
         printf("The file that contains always cache hit addresses is not found.\n");
         return;
@@ -57,7 +62,17 @@ void init_cache_hit_list(void) {
     while (!feof(fp)) {
         ret = fscanf(fp, "%x", &addr);
         if (ret > 0)
-            cache_hit_memory.insert(addr);
+            list.insert(addr);
+        if (ret == 0) {
+            printf("Bad data in cache hit list (%s)\n", filename);
+            exit(1);
+        }
     }
     fclose(fp);
+}
+
+void init_cache_hit_list(void) {
+    l1_cache_hit_memory.clear();
+    load_hit_list(L1_CACHE_HIT_LIST_FILENAME, l1_cache_hit_memory);
+    load_hit_list(L2_CACHE_HIT_LIST_FILENAME, l2_cache_hit_memory);
 }

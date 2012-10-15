@@ -1,6 +1,7 @@
 #ifdef __cplusplus
 
-#define CACHE_HIT_LIST_FILENAME "cache_hit"
+#define L1_CACHE_HIT_LIST_FILENAME "cache_hit_l1.txt"
+#define L2_CACHE_HIT_LIST_FILENAME "cache_hit_l2.txt"
 
 extern "C" {
 #endif
@@ -18,6 +19,8 @@ extern "C" {
     int local_memory_query(unsigned addr, long *value);
 
     int cache_hit_p(unsigned addr);
+
+    int l2_cache_hit_p(unsigned addr);
 
     void init_cache_hit_list(void);
 
