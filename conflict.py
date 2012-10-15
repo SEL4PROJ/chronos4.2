@@ -71,17 +71,21 @@ def read_tcfg_map(input_filename):
 
     f.close()
 
-def context_match(ctx1, ctx2, start, end):
-    i = len(ctx1) - 1;
-    j = len(ctx2) - 1;
+def context_match(ctx1, ctx2, start, end, id1, id2):
+    i = len(ctx1) - 1
+    j = len(ctx2) - 1
     while i >= 0 and j >= 0 and ctx1[i] == ctx2[j]:
+        if start <= ctx1[i] <= end:
+            return True
+
         i = i - 1
         j = j - 1
-    
-    #print ctx1
-    #print ctx2
-    #print i, j, start, end, ctx1[i], ctx2[j]
-   
+
+    #if (id1, id2) == ('2658', '2967'):
+        #print ['%x' % x for x in ctx1]
+        #print ['%x' % x for x in ctx2]
+        #print i, j, hex(start), hex(end), hex(ctx1[i]), hex(ctx2[j])
+
     if i >= 0 and (ctx1[i] < start or ctx1[i] > end):
         return False
     if j >= 0 and (ctx2[j] < start or ctx2[j] > end):
@@ -102,9 +106,11 @@ def process_conflict(fout, conflict_file):
     while True:
         kind_str = f.readline()
         if kind_str == '':
-            break;
+            break
         kind_str = kind_str.strip()
         if kind_str[0] == '#':
+            print kind_str
+            fout.write("\\ %s\n" % kind_str)
             continue
 
         if kind_str == 'times':
@@ -145,17 +151,26 @@ def process_conflict(fout, conflict_file):
             start = int(start_str.strip(), 16)
             end = int(end_str.strip(), 16)
 
+            did_it = False
             if bb1 in bb_addr_to_ids and bb2 in bb_addr_to_ids:
                 id_list1 = bb_addr_to_ids[bb1]
                 id_list2 = bb_addr_to_ids[bb2]
-                #print id_list1, id_list2
+                #if bb1 == 0xf0014c18 and bb2 == 0xf0014ad4:
+                    #print "LISTS"
+                    #print id_list1
+                    #print id_list2
                 for id1 in id_list1:
                     for id2 in id_list2:
-                        if context_match(id_to_context[id1], id_to_context[id2], start, end):
+                        if context_match(id_to_context[id1], id_to_context[id2], start, end, id1, id2):
                             if kind_str == 'conflict':
                                 fout.write("b{0} + b{1} <= 1\n".format(id1, id2))
+                                did_it = True
                             elif kind_str == 'consistent':
                                 fout.write("b{0} - b{1} = 0\n".format(id1, id2))
+                                did_it = True
+
+            if not did_it:
+                print "WARNING: No constraints generated!"
 
     fout.write("\n");
     f.close()
