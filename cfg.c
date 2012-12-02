@@ -327,9 +327,11 @@ create_cfg_edges(proc_t *proc)
                 new_edge(bb, bb1, NOT_TAKEN);
             }
 	} else {
+#if 0
             // if it's nop without target, just skip
             if (type == INST_NOP && bb->code[bb->num_inst-1].num_targets == 0)
                 continue;
+#endif
 
             // if it's preemption point, break the cfg
             if (bb->code[bb->num_inst-1].preemption) {
