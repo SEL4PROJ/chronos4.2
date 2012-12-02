@@ -34,6 +34,12 @@
 
 
 
+#if 0
+#define D(x...) printf(x)
+#else
+#define D(x...) do { } while(0)
+#endif
+
 #define	loop_bbb_idx(id)    ((id) - lp_bbb_offset - num_bfg_nodes)
 
 extern int	    num_tcfg_nodes;
@@ -363,22 +369,39 @@ map_dfs_helper(int node_id, int *visited, int *am_ancestor, int *node_seq, loop_
     assert(node_id >= 0 && node_id < num_tcfg_nodes);
 
     if (visited[node_id]) {
-        // Two cases. Either:
-        //  (1) node_id is a loop head, in which case an entry in loop_map has
-        //      been created by find_loops().
-        //  (2) node_id is not a loop head, in which case we return the loop
-        //      that it lies within, according to loop_map.
+        // Three cases:
+        //  (1) node_id is a visited ancestor, therefore is a loop head and we
+        //      are in its loop. In this case, an entry in loop_map has been
+        //      created by find_loops() and we add this loop to our set.
+        //  (2) node_id is a loop head but not an ancestor - in this case, as
+        //      we should already know the parent of the loop, we add its
+        //      parent to our loop set.
+        //  (3) node_id is not a loop head, but we have visited already
+        //      therefore we know what loop it lies in. Add the same loop as a
+        //      candidate for us.
 
-        assert(loop_map[node_id] != NULL);
+        if (loop_map[node_id] == NULL) {
+            printf("ERROR: node %d is not mapped to a loop yet.\n", node_id);
+            assert(loop_map[node_id] != NULL);
+        }
 
-        // If the node is a loop head, it should be the ancestor.
-        // Otherwise, there's problem if a loop has two entries.
-        if (loop_map[node_id]->head->id == node_id)
-            if (!am_ancestor[node_id])
-                return;
+        if (loop_set != NULL) {
+            if (am_ancestor[node_id]) {
+                // Case (1). We hit a back edge. Therefore this node has
+                // already been mapped to a loop by find_loops().
+                loop_set_add(loop_set, loop_map[node_id]->id);
+            } else {
+                // Case (2). If it's a loop head, use its parent loop.
+                // Case (3). Otherwise, use it's loop.
 
-        if (loop_set != NULL)
-            loop_set_add(loop_set, loop_map[node_id]->id);
+                // Is there a simplier expression?
+                if (loops[loop_map[node_id]->id]->head->id == node_id) {
+                    loop_set_add(loop_set, loop_map[node_id]->parent->id);
+                } else {
+                    loop_set_add(loop_set, loop_map[node_id]->id);
+                }
+            }
+        }
         return;
     }
 
@@ -404,16 +427,28 @@ map_dfs_helper(int node_id, int *visited, int *am_ancestor, int *node_seq, loop_
 
     loop_set_init(&this_loop_set);
     for (e = node->out; e != NULL; e = e->next_out) {
+        D("%d to %d\n", node_id, e->dst->id);
         map_dfs_helper(e->dst->id, visited, am_ancestor, node_seq, &this_loop_set);
     }
 
     am_ancestor[node_id] = 0;
 
-    assert(loop_set_size(&this_loop_set) > 0);
+    if (loop_set_size(&this_loop_set) == 0) {
+        printf("ERROR: node %d leads to no loop heads.\n", node_id);
+        assert(loop_set_size(&this_loop_set) > 0);
+    }
+
+    D("Node %d has loop set: [ ", node_id);
+    int i;
+    for (i = 0; i < this_loop_set.num_loops; i++)
+        D("%d ", this_loop_set.loop_ids[i]);
+    D("]");
+
     int my_loop_id = loop_set_get_innermost(&this_loop_set);
     assert(my_loop_id >= 0 && my_loop_id < num_tcfg_loops);
     assert(loops[my_loop_id] != NULL);
     loop_map[node_id] = loops[my_loop_id];
+    D("Node %d is in loop %d\n", node_id, my_loop_id);
     if (tcfg[node_id]->bb->proc == loops[my_loop_id]->head->bb->proc) {
         if (tcfg[node_id]->bb->id < loops[my_loop_id]->first_bb_id)
             loops[my_loop_id]->first_bb_id = tcfg[node_id]->bb->id;
@@ -422,6 +457,7 @@ map_dfs_helper(int node_id, int *visited, int *am_ancestor, int *node_seq, loop_
     }
 
     if (loop_map[node_id]->head->id == node_id) {
+        D(" and was a loop head");
         loop_set_remove_innermost(&this_loop_set);
 
         // At this point we also know our parent.
@@ -434,6 +470,7 @@ map_dfs_helper(int node_id, int *visited, int *am_ancestor, int *node_seq, loop_
             loop_map[node_id]->parent = loops[parent_loop_id];
         }
     }
+    D("\n");
 
     if (loop_set != NULL)
         loop_set_merge(loop_set, &this_loop_set);
@@ -510,9 +547,9 @@ search_common_ancestor(loop_t *x, loop_t *y)
 	}
     }
     /* liangyun */
+#if 1
     fprintf(stderr, "Oops, no common ancestor for two loops: %d, %d is found!\n",
 	    x->id, y->id);
-#if 0
     exit(1);
 #endif
 }
