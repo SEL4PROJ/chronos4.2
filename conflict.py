@@ -104,22 +104,20 @@ def process_conflict(fout, conflict_file):
 
     last_bb_id = 0
     while True:
-        kind_str = f.readline()
-        if kind_str == '':
+        conflict_line = f.readline()
+        if conflict_line == '':
             break
-        kind_str = kind_str.strip()
-        if kind_str[0] == '#':
-            print kind_str
-            fout.write("\\ %s\n" % kind_str)
+        conflict_line = conflict_line.strip()
+        if conflict_line[0] == '#':
+            print conflict_line
+            fout.write("\\ %s\n" % conflict_line)
             continue
 
-        if kind_str == 'times':
-            n = f.readline();
-            if n == '':
-                break;
-            s = f.readline()
-            if s == '':
-                break
+        parts = conflict_line.split()
+
+        if parts[0] == 'times':
+            n = parts[1]
+            s = parts[2]
 
             num = int(n.strip())
             bb_addr = int(s.strip(), 16)
@@ -132,19 +130,17 @@ def process_conflict(fout, conflict_file):
                             fout.write(" + ")
                         fout.write("b{0}".format(id))
                     fout.write(" <= {0}\n".format(num))
+        elif parts[0] == "conflict_edge":
+            srcbb1 = int(parts[1])
+            dstbb1 = int(parts[2])
+            srcbb2 = int(parts[3])
+            dstbb2 = int(parts[4])
+            fout.write("d%d_%d + d%d_%d <= 1\n" % (srcbb1, dstbb1, srcbb2, dstbb2))
         else:
-            bb1_str = f.readline()
-            if bb1_str == '':
-                break
-            bb2_str = f.readline()
-            if bb2_str == '':
-                break
-            start_str = f.readline()
-            if start_str == '':
-                break
-            end_str = f.readline();
-            if end_str == '':
-                break
+            bb1_str = parts[1]
+            bb2_str = parts[2]
+            start_str = parts[3]
+            end_str = parts[4]
          
             bb1 = int(bb1_str.strip(), 16)
             bb2 = int(bb2_str.strip(), 16)
@@ -162,10 +158,10 @@ def process_conflict(fout, conflict_file):
                 for id1 in id_list1:
                     for id2 in id_list2:
                         if context_match(id_to_context[id1], id_to_context[id2], start, end, id1, id2):
-                            if kind_str == 'conflict':
+                            if parts[0] == 'conflict':
                                 fout.write("b{0} + b{1} <= 1\n".format(id1, id2))
                                 did_it = True
-                            elif kind_str == 'consistent':
+                            elif parts[0] == 'consistent':
                                 fout.write("b{0} - b{1} = 0\n".format(id1, id2))
                                 did_it = True
 
