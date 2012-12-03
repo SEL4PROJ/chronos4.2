@@ -30,6 +30,7 @@
 // control flow transfer
 enum inst_type_t {
     INST_NOP = 0,   // instr. doing nothing
+    INST_DEAD,      // worse than nothing - no edges in or out. Should never be executed.
     // (1) computation
     INST_ICOMP,	    // integer arithmetic instr.
     INST_FCOMP,	    // floating-point arithmetic instr.
@@ -87,6 +88,9 @@ struct de_inst_t {
     int	    op_enum;	    	/* continuous numbered opcode 
 										   (orginal non-contenuous) */
     int	    size;
+
+    // Consider this instruction just dead code?
+    unsigned int is_dead;
 
     unsigned int     is_ret:1;
     unsigned int     is_call:1;

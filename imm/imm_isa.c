@@ -42,6 +42,10 @@ inst_type(de_inst_t *inst)
     if (inst->is_call)
         return INST_CALL;
 
+    if (inst->is_dead) {
+        return INST_DEAD;
+    }
+
     if (inst->num_targets > 0)
         return inst->conditional ? INST_COND : INST_UNCOND;
 

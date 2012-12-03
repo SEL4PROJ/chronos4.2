@@ -480,6 +480,11 @@ decode_instruction_line(const char *line, prog_t *prog)
         s = next_token(s);
     }
 
+    // If we have no outgoing edges, it is dead code.
+    if (num_outedges == 0) {
+        inst->is_dead = 1;
+    }
+
     // Read mnemonic.
     ret = sscanf(s, "%s", mnemonic);
     assert(ret == 1);
