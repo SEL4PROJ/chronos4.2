@@ -327,12 +327,13 @@ add_inst(int inst)
                 case LDR_L:
                 case LDR_H:
                 case LDR_BL:
+                    if (eg_insts[inst]->inst->pc_changed)
+                        extra_cycles += ruu_branch_penalty;
+                    /* fallthrough */
                 case STR_U:
                 case STR_H:
                 case STR_B:
                     extra_cycles += mem_access_cycles;
-                    if (eg_insts[inst]->inst->pc_changed)
-                        extra_cycles += ruu_branch_penalty;
                     break;
                 case LDM_L:
                     //tmp = eg_insts[inst]->inst->num_out;
