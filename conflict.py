@@ -93,6 +93,20 @@ def context_match(ctx1, ctx2, start, end, id1, id2):
 
     return True
 
+def read_preemption_edges(conflict_file):
+    preemption_edges = []
+    f = open(conflict_file)
+    while True:
+        l = f.readline()
+        if l == '':
+            break
+        bits = l.strip().split()
+        if bits[0] == "preemption_point":
+            preemption_edges.append(tuple([int(x) for x in bits[1:4]]))
+
+    f.close()
+    return preemption_edges
+
 def process_conflict(fout, conflict_file):
     f = open(conflict_file)
 
@@ -119,8 +133,8 @@ def process_conflict(fout, conflict_file):
             n = parts[1]
             s = parts[2]
 
-            num = int(n.strip())
-            bb_addr = int(s.strip(), 16)
+            num = int(n.strip(), 0)
+            bb_addr = int(s.strip(), 0)
 
             if bb_addr in bb_addr_to_ids:
                 id_list = bb_addr_to_ids[bb_addr]
@@ -130,22 +144,36 @@ def process_conflict(fout, conflict_file):
                             fout.write(" + ")
                         fout.write("b{0}".format(id))
                     fout.write(" <= {0}\n".format(num))
-        elif parts[0] == "conflict_edge":
-            srcbb1 = int(parts[1])
-            dstbb1 = int(parts[2])
-            srcbb2 = int(parts[3])
-            dstbb2 = int(parts[4])
-            fout.write("d%d_%d + d%d_%d <= 1\n" % (srcbb1, dstbb1, srcbb2, dstbb2))
-        else:
+        elif parts[0] == "conflict_edge_set":
+            # Each pair of bbs specifies an edge.
+            assert ((len(parts) - 1) % 2) == 0, \
+                    "conflict_edge_set does not have an even number of arguments."
+            s = None
+            p = parts[1:]
+            n = 0
+            while p:
+                a = int(p[0], 0)
+                b = int(p[1], 0)
+                if s == None:
+                    s = 'd%d_%d' % (a, b)
+                else:
+                    s += ' + d%d_%d' % (a, b)
+                p = p[2:]
+                n += 1
+            s += ' <= %d\n' % (n - 1)
+            fout.write(s)
+        elif parts[0] == "preemption_point":
+            pass
+        elif parts[0] in ("conflict", "consistent"):
             bb1_str = parts[1]
             bb2_str = parts[2]
             start_str = parts[3]
             end_str = parts[4]
          
-            bb1 = int(bb1_str.strip(), 16)
-            bb2 = int(bb2_str.strip(), 16)
-            start = int(start_str.strip(), 16)
-            end = int(end_str.strip(), 16)
+            bb1 = int(bb1_str.strip(), 0)
+            bb2 = int(bb2_str.strip(), 0)
+            start = int(start_str.strip(), 0)
+            end = int(end_str.strip(), 0)
 
             did_it = False
             if bb1 in bb_addr_to_ids and bb2 in bb_addr_to_ids:
@@ -167,28 +195,48 @@ def process_conflict(fout, conflict_file):
 
             if not did_it:
                 print "WARNING: No constraints generated!"
+        else:
+            assert False, "Invalid line: %s" % parts[0]
 
     fout.write("\n");
     f.close()
 
-def print_constraints(conflict_file, old_cons_file, new_cons_file):
+def print_constraints(conflict_file, old_cons_file, new_cons_file, pp_num):
     global bb_count
     global edge_count
 
+    preemption_edges = read_preemption_edges(conflict_file)
+    num_pp = len(preemption_edges)
+    print "Have %d preemption points" % num_pp
+    if num_pp > 0:
+        if pp_num != None:
+            assert 0 <= pp_num <= num_pp
+            if pp_num == num_pp:
+                print "Exercising pp from %d -> END" % (pp_num)
+            elif pp_num == 0:
+                print "Exercising pp from START -> %d" % (pp_num + 1)
+            else:
+                print "Exercising pp from %d -> %d" % (pp_num, pp_num + 1)
+        else:
+            print "But not doing anything about it. Iterate from 0 .. %d." % num_pp
+
     fin = open(old_cons_file)
     fout = open(new_cons_file, 'w+')
+
     for line in fin:
-        if line.strip() != 'Generals':
-            fout.write(line)
-            continue
-        process_conflict(fout, conflict_file)
+        if line.strip() == 'Generals':
+            process_conflict(fout, conflict_file)
         fout.write(line)
+
     fin.close()
     fout.close()
 
 if __name__ == '__main__':
-    if len(sys.argv) != 5:
-        print "Usage: conflict <tcfg map> <conflict file> <old constraints file> <new constraints file>"
+    if not (5 <= len(sys.argv) <= 6):
+        print "Usage: conflict <tcfg map> <conflict file> <old constraints file> <new constraints file> [preemption point number]"
         sys.exit(1)
     read_tcfg_map(sys.argv[1])
-    print_constraints(sys.argv[2], sys.argv[3], sys.argv[4])
+    pp_num = None
+    if len(sys.argv) > 5:
+        pp_num = int(sys.argv[5])
+    print_constraints(sys.argv[2], sys.argv[3], sys.argv[4], pp_num)
