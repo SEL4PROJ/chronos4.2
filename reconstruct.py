@@ -97,6 +97,9 @@ def read_tcfg_map(input_filename):
 global addr2line_proc
 addr2line_proc = None
 def addr2line(addr):
+    if not elf_file:
+        return ''
+
     global addr2line_proc
     if addr2line_proc is None:
         addr2line_proc = Popen(
@@ -169,8 +172,8 @@ def follow():
                 '%s/%#x(%d)' % (
                     x, tcfg_to_bb_map[x][0], local_path_counts[node_id][x])
                 for x in sorted_edges])
-            annotations[dest_id].append(
-                "# (from %s had choice of [%s])" % (node_id, choices))
+            #annotations[dest_id].append(
+            #    "# (from %s had choice of [%s])" % (node_id, choices))
 
         # Do we need to accelerate matters for long loops?
         # We can accelerate once we have been through the loop once.
@@ -216,9 +219,9 @@ def follow():
 
     prev = None
     for node_id in reversed(path):
-        print '# %s(%#x) -> %s(%#x)' % (
-                prev, tcfg_to_bb_map.get(prev, [0])[0],
-                node_id, tcfg_to_bb_map.get(node_id, [0])[0])
+        # print '# %s(%#x) -> %s(%#x)' % (
+        #         prev, tcfg_to_bb_map.get(prev, [0])[0],
+        #         node_id, tcfg_to_bb_map.get(node_id, [0])[0])
 
         for s in annotations.get(node_id, []):
             print s
@@ -251,11 +254,14 @@ def follow():
 
 
 if __name__ == '__main__':
-    if len(sys.argv) != 4:
-        print "Usage: reconstruct <solution file> <tcfg map file> <ELF file>"
+    if not (3 <= len(sys.argv) <= 4):
+        print "Usage: reconstruct <solution file> <tcfg map file> [ELF file]"
         sys.exit(1)
 
-    elf_file = sys.argv[3]
+    if len(sys.argv) >= 4:
+        elf_file = sys.argv[3]
+    else:
+        elf_file = None
     read_variables(sys.argv[1])
     read_tcfg_map(sys.argv[2])
 
