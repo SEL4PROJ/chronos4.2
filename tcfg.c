@@ -519,10 +519,15 @@ proc_inline(proc_t *proc, tcfg_node_t *call_bbi, tcfg_node_t *ret_bbi, int depth
     for (i = 0; i < proc->num_bb; i++) {
 	// if the block calls a proc, the tcfg edge has been created in the recursive
 	// invokation of the callee, thus we do nothing here
-	// Yao: If this bb is conditional call, we have to create a fall-through edge.
-        //      So we can't continue directly.
-        // if (proc->cfg[i].type == CTRL_CALL)
-	//    continue;
+
+	if (proc->cfg[i].type == CTRL_CALL) {
+	    // If this bb is conditional call, we have to create a fall-through
+	    // edge.
+	    int num_out = (proc->cfg[i].out_t ? 1 : 0) + (proc->cfg[i].out_n ? 1 : 0);
+	    if (num_out == 1)
+		continue;
+	}
+
 	// if the block is return, create an edge from it to ret_bbi if not NULL
 	if (proc->cfg[i].type == CTRL_RET) {
 	    if (ret_bbi != NULL) {
