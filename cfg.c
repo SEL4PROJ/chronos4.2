@@ -328,7 +328,10 @@ create_cfg_edges(proc_t *proc)
             }
 	} else {
             // if it's nop without target, just skip
-            if (type == INST_DEAD || (type == INST_NOP && bb->code[bb->num_inst-1].num_targets == 0))
+            if (type == INST_DEAD ||
+                    (type == INST_NOP &&
+                        (bb->code[bb->num_inst-1].num_targets == 0 &&
+                         !bb->code[bb->num_inst-1].conditional)))
                 continue;
 
             // if it's preemption point, break the cfg
