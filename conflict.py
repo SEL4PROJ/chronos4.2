@@ -102,7 +102,7 @@ def read_preemption_edges(conflict_file):
             break
         bits = l.strip().split()
         if bits[0] == "preemption_point":
-            preemption_edges.append(tuple([int(x) for x in bits[1:4]]))
+            preemption_edges.append(tuple([int(x, 0) for x in bits[1:4]]))
 
     f.close()
     return preemption_edges
