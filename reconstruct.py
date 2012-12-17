@@ -15,6 +15,9 @@ tcfg_paths = {}
 global tcfg_to_bb_map
 tcfg_to_bb_map = {}
 
+global tcfg_to_context_map
+tcfg_to_context_map = {}
+
 global total_edges
 total_edges = 0
 
@@ -65,12 +68,13 @@ def read_tcfg_map(input_filename):
             \s
             \[\s
                 ([\d\s]*)
-            \].*$''',
+            \] ([a-f0-9\s]*)$''',
             re.VERBOSE)
 
     f = open(input_filename)
     global tcfg_paths
     global tcfg_to_bb_map
+    global tcfg_to_context_map
     while True:
         s = f.readline()
         if s == '':
@@ -79,16 +83,18 @@ def read_tcfg_map(input_filename):
         if not g:
             continue
 
-        bb_id, bb_addr, bb_size, bb_dests = g.groups()
+        bb_id, bb_addr, bb_size, bb_dests, bb_context = g.groups()
 
         bb_addr = int(bb_addr, 16)
         bb_size = int(bb_size, 16)
         bb_dests = [ x.strip() for x in bb_dests.split() if x.strip() ]
+        bb_context = [ x.strip() for x in bb_context.split() if x.strip() ]
 
         assert bb_id not in tcfg_paths
 
         tcfg_paths[bb_id] = bb_dests
         tcfg_to_bb_map[bb_id] = (bb_addr, bb_size)
+        tcfg_to_context_map[bb_id] = bb_context
 
     f.close()
     if not tcfg_paths:
@@ -117,8 +123,9 @@ def print_block(node_id):
     if node_id == 'Sta':
         return
     addr, size = tcfg_to_bb_map[node_id]
+    space = '   ' * len(tcfg_to_context_map[node_id])
     for i in xrange(0, size, 4):
-        print '%#x %s' % (addr + i, addr2line(addr + i))
+        print '%#x %s%s' % (addr + i, space, addr2line(addr + i))
 
 def follow():
     # Find an eulerian path through the graph.
