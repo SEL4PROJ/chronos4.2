@@ -2026,7 +2026,7 @@ static void tcfg_node_ctx_term(FILE* fp, tcfg_node_t* bbi, int context,
                 exit(0);
         }
         int l = getLength(upperBound - 1);
-        char contextStr[l];
+        char contextStr[l + 1];
         printContext(context, l, contextStr);
         tcfg_node_str(bbi);
         sprintf(term, "%sb%s.v%s%s", prefix, str, contextStr, suffix);
