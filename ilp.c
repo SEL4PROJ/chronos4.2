@@ -2577,7 +2577,7 @@ constraints(void)
     generate_cons_from_imm(); // JIT generation...
 
     // generate the conflict with start points
-    generate_start_points();
+    // generate_start_points();
 
     // user constraints
     //user_cons();
