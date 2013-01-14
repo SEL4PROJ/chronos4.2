@@ -269,9 +269,16 @@ add_inst(int inst)
 {
     int		    stage, fu, ic_flag, ic_flag_l2, bbi_id, mblk_id, mblk_id_l2, dc_flag, dc_flag_l2;
     egraph_node_t   *node;
+    int imaginary = 0;
 
     ic_flag = eg_insts[inst]->ic_flag;
     ic_flag_l2 = eg_insts[inst]->ic_flag_l2;
+
+    if (inst > 0 && eg_insts[inst - 1]) {
+        if (eg_insts[inst]->inst->addr == eg_insts[inst - 1]->inst->addr) {
+            imaginary = 1;
+        }
+    }
 
     if ((ic_flag != IC_HIT) && (inst < plog_len || inst >= (plog_len + body_len) )) {
 	bbi_id = eg_insts[inst]->bbi_id;
@@ -299,7 +306,11 @@ add_inst(int inst)
 	node = &egraph[inst][stage];
 	node->inst = inst;
 	node->stage = stage;
-	if ((stage == STAGE_EX)) {
+        if (imaginary) {
+            /* This instruction is a dummy one. */
+	    node->fu = node->num_fu = 0;
+	    node->lat.hi = node->lat.lo = 0;
+        } else if ((stage == STAGE_EX)) {
 	    fu = ss_inst_fu(eg_insts[inst]->inst);
 	    node->fu = fu;
 	    node->num_fu = pfu_quant[fu2pfu[fu]];
