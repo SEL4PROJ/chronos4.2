@@ -123,7 +123,7 @@ def process_conflict(fout, conflict_file):
             break
         conflict_line = conflict_line.strip()
         if conflict_line[0] == '#':
-            print conflict_line
+            #print conflict_line
             fout.write("\\ %s\n" % conflict_line)
             continue
 
@@ -146,12 +146,12 @@ def process_conflict(fout, conflict_file):
                     fout.write(" <= {0}\n".format(num))
         elif parts[0] == "conflict_edge_set":
             # Each pair of bbs specifies an edge.
-            assert ((len(parts) - 1) % 2) == 0, \
-                    "conflict_edge_set does not have an even number of arguments."
+            assert ((len(parts) - 1) % 2) == 1, \
+                    "conflict_edge_set does not have an odd number of arguments."
             s = None
             p = parts[1:]
             n = 0
-            while p:
+            while len(p) >= 2:
                 a = int(p[0], 0)
                 b = int(p[1], 0)
                 if s == None:
@@ -160,7 +160,7 @@ def process_conflict(fout, conflict_file):
                     s += ' + d%d_%d' % (a, b)
                 p = p[2:]
                 n += 1
-            s += ' <= %d\n' % (n - 1)
+            s += ' <= %d\n' % (int(p[0], 0))
             fout.write(s)
         elif parts[0] == "preemption_point":
             pass
