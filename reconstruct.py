@@ -69,6 +69,7 @@ def read_variables(input_filename):
     root_set.intersection_update(has_out_edge)
     if len(root_set) != 1:
         raise Exception("Cannot find root node.")
+    global root_node_id
     root_node_id = root_set.pop()
 
 def read_tcfg_map(input_filename):
@@ -254,7 +255,7 @@ def follow():
 
         prev = node_id
 
-    if 0: #edges_remaining > 0:
+    if edges_remaining > 0:
         print "%d edges remain:" % edges_remaining
         def tryint(x):
             try:
