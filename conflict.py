@@ -216,6 +216,7 @@ def process_preemptions(fout, preemption_edges, pp_num):
         # starting preemption point.
         for i, (src, preempt_dst, not_preempt_dst) in enumerate(preemption_edges):
             if i == pp_num - 1:
+                fout.write("b%d = 1\n" % src)
                 fout.write("d%d_%d = 1\n" % (src, not_preempt_dst))
             else:
                 fout.write("d%d_%d = 0\n" % (src, not_preempt_dst))
@@ -246,8 +247,8 @@ def print_constraints(conflict_file, old_cons_file, new_cons_file, pp_num):
     # need to set dA_B = 1, and also remove the flow equation for A's sources.
     # Here we construct a regexp that describes the line we're looking for.
     if entry_pp != None:
-        entry_pp_re = re.compile(r'b%d -.* d%d_%d .*= 0$' % (
-                entry_pp[0], entry_pp[0], entry_pp[1]))
+        entry_pp_src = re.compile(r'b%d' % entry_pp[0])
+        entry_pp_edge = re.compile(r'd\d+_%d' % entry_pp[0])
     else:
         entry_pp_re = None
 
@@ -265,11 +266,12 @@ def print_constraints(conflict_file, old_cons_file, new_cons_file, pp_num):
                 fout.write('dSta_0 = 0\n')
                 continue
 
-        if entry_pp_re != None:
-            g = entry_pp_re.match(line)
-            if g:
-                if discarded_pp_line:
-                    raise Exception("Found multiple flow lines for preemption point.")
+        if entry_pp_src != None:
+            g1 = entry_pp_src.search(line)
+            g2 = entry_pp_edge.search(line)
+            if g1 and g2:
+                #if discarded_pp_line:
+                #    raise Exception("Found multiple flow lines for preemption point.")
                 discarded_pp_line = True
                 continue
 
@@ -278,8 +280,8 @@ def print_constraints(conflict_file, old_cons_file, new_cons_file, pp_num):
             process_preemptions(fout, preemption_edges, pp_num)
         fout.write(line + "\n")
 
-    if entry_pp_re != None and not discarded_pp_line:
-        raise Exception("Failed to find flow line for preemption point.")
+    #if entry_pp_src != None and not discarded_pp_line:
+    #    raise Exception("Failed to find flow line for preemption point.")
 
     fin.close()
     fout.close()
