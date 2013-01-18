@@ -250,7 +250,8 @@ def print_constraints(conflict_file, old_cons_file, new_cons_file, pp_num):
         entry_pp_src = re.compile(r'b%d' % entry_pp[0])
         entry_pp_edge = re.compile(r'd\d+_%d' % entry_pp[0])
     else:
-        entry_pp_re = None
+        entry_pp_src = None
+        entry_pp_edge = None
 
     fin = open(old_cons_file)
     fout = open(new_cons_file, 'w+')

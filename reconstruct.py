@@ -5,6 +5,7 @@ import re
 import sys
 import copy
 from subprocess import Popen, PIPE
+from sets import Set
 
 global path_counts
 path_counts = {}
@@ -21,7 +22,12 @@ tcfg_to_context_map = {}
 global total_edges
 total_edges = 0
 
+global root_set
+root_set = Set([])
+
 global elf_file
+global root_node_id
+root_node_id = 'Sta'
 
 def read_variables(input_filename):
     var_re = re.compile(r'^d(\d+|Sta)_(\d+)\s+([\d.]+)$')
@@ -29,6 +35,9 @@ def read_variables(input_filename):
     f = open(input_filename)
     global path_counts
     global total_edges
+
+    has_out_edge = Set([])
+
     while True:
         s = f.readline()
         if s == '':
@@ -49,11 +58,18 @@ def read_variables(input_filename):
             continue
 
         path_counts[from_id][to_id] = count
+        if to_id in root_set:
+            root_set.remove(to_id)
+        has_out_edge.add(from_id)
         total_edges += count
 
     f.close()
     if not path_counts:
         raise Exception("No variables found in solution.")
+    root_set.intersection_update(has_out_edge)
+    if len(root_set) != 1:
+        raise Exception("Cannot find root node.")
+    root_node_id = root_set.pop()
 
 def read_tcfg_map(input_filename):
     tcfg_re = re.compile(
@@ -85,6 +101,7 @@ def read_tcfg_map(input_filename):
 
         bb_id, bb_addr, bb_size, bb_dests, bb_context = g.groups()
 
+        root_set.add(bb_id)
         bb_addr = int(bb_addr, 16)
         bb_size = int(bb_size, 16)
         bb_dests = [ x.strip() for x in bb_dests.split() if x.strip() ]
@@ -136,7 +153,7 @@ def follow():
 
     seen_set = set()
     stack = []
-    stack.append('Sta')
+    stack.append(root_node_id)
 
     annotations = dict([(x, []) for x in tcfg_paths.keys()])
 
@@ -237,7 +254,7 @@ def follow():
 
         prev = node_id
 
-    if edges_remaining > 0:
+    if 0: #edges_remaining > 0:
         print "%d edges remain:" % edges_remaining
         def tryint(x):
             try:
@@ -269,7 +286,7 @@ if __name__ == '__main__':
         elf_file = sys.argv[3]
     else:
         elf_file = None
-    read_variables(sys.argv[1])
     read_tcfg_map(sys.argv[2])
+    read_variables(sys.argv[1])
 
     follow()
