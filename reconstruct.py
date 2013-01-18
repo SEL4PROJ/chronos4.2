@@ -67,10 +67,13 @@ def read_variables(input_filename):
     if not path_counts:
         raise Exception("No variables found in solution.")
     root_set.intersection_update(has_out_edge)
-    if len(root_set) != 1:
-        raise Exception("Cannot find root node.")
     global root_node_id
-    root_node_id = root_set.pop()
+    if len(root_set) == 0:
+        root_node_id = 'Sta'
+    elif len(root_set) != 1:
+        raise Exception("Cannot find root node.")
+    else:
+        root_node_id = root_set.pop()
 
 def read_tcfg_map(input_filename):
     tcfg_re = re.compile(
