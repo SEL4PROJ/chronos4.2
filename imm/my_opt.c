@@ -131,7 +131,7 @@ int compress_icache_addrs;
 /* memory access latency (<first_chunk> <inter_chunk>) */
 int mem_nelt = 2;
 int mem_lat[2] =
-  { /* lat to first chunk */96, /* lat between remaining chunks */96 };
+  { /* lat to first chunk */70, /* lat between remaining chunks */70 };
 
 /* memory access bus width (in bytes) */
 int mem_bus_width;
@@ -389,7 +389,7 @@ sim_reg_options(struct opt_odb_t *odb)
 
   opt_reg_string(odb, "-cache:dl2",
 		 "l2 data cache config, i.e., {<config>|none}",
-		 &cache_dl2_opt, "ul2:512:32:1:l",
+		 &cache_dl2_opt, "none", //"ul2:128:32:1:l",
 		 /* print */TRUE, NULL);
 
   opt_reg_int(odb, "-cache:dl2lat",
@@ -409,7 +409,7 @@ sim_reg_options(struct opt_odb_t *odb)
 
   opt_reg_string(odb, "-cache:il2",
 		 "l2 instruction cache config, i.e., {<config>|dl2|none}",
-		 &cache_il2_opt, "dl2", //"ul2:256:64:8:l",
+		 &cache_il2_opt, "none", //"dl2", //"ul2:256:64:8:l",
 		 /* print */TRUE, NULL);
 
   opt_reg_int(odb, "-cache:il2lat",
@@ -787,12 +787,12 @@ sim_check_options(struct opt_odb_t *odb,        /* options database */
   }
   if (enable_icache) {
     if (!(enable_il2cache == 1 || enable_ul2cache == 1 )) {
-      set_cache_basic(nsets, assoc, bsize, mem_lat[0]);
+      set_cache_basic(nsets, assoc, bsize, 26, mem_lat[0]);
     } else if (enable_il2cache == 1) {
-      set_cache_basic(nsets, assoc, bsize, cache_il2_lat);
+      assert(0); //set_cache_basic(nsets, assoc, bsize, cache_il2_lat);
       set_l2_cache_basic(nsets_l2, assoc_l2, bsize_l2, mem_lat[0]);
     } else if (enable_ul2cache == 1) {
-      set_cache_basic(nsets, assoc, bsize, cache_dl2_lat);
+      assert(0); //set_cache_basic(nsets, assoc, bsize, cache_dl2_lat);
       set_l2_cache_basic(nsets_dl2, assoc_dl2, bsize_dl2, mem_lat[0]);
     }
   }

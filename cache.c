@@ -92,11 +92,12 @@ dump_hm_list(void);
 
 
 void
-set_cache_basic(int nsets, int assoc, int bsize, int miss_penalty)
+set_cache_basic(int nsets, int assoc, int bsize, int imiss_penalty, int miss_penalty)
 {
     cache.ns = nsets;
     cache.na = assoc;
     cache.ls = bsize;
+    cache.icmp = imiss_penalty;
     cache.cmp = miss_penalty;
 }
 
@@ -108,6 +109,7 @@ set_l2_cache_basic(int nsets_l2, int assoc_l2, int bsize_l2, int miss_penalty)
     cache_l2.na = assoc_l2;
     cache_l2.ls = bsize_l2;
     cache_l2.cmp = miss_penalty;
+    cache_l2.icmp = 99999999; // Shouldn't be used.
 }
 
 void

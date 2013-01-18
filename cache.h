@@ -72,6 +72,7 @@ typedef struct {
     int		nsb;    // nsb = log(ns)
     int		lsb;    // lsb = log(ls)
     int		cmp;    // cache miss penalty
+    int		icmp;   // instruction cache miss penalty
     int		na;
 
     // decided by cache config + program size
@@ -162,7 +163,7 @@ typedef struct loop_t	loop_t;
 #endif
 
 void
-set_cache_basic(int nsets, int assoc, int bsize, int miss_penalty);
+set_cache_basic(int nsets, int assoc, int bsize, int imiss_penalty, int miss_penalty);
 void
 set_cache(void);
 

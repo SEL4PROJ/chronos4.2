@@ -2441,11 +2441,13 @@ void scp_context_cons(void) {
                 } else {
                         loop_t* parent = lp->parent;
                         tcfg_node_t* pHead = parent->head;
-                        tcfg_node_term(filp, head, NO_PREFIX, NO_SUFFIX);
-                        fprintf(filp, " - %d ", lp->bound);
-                        tcfg_node_term(filp, pHead, NO_PREFIX, NO_SUFFIX);
-                        fprintf(filp, " <= 0\n");
-                        total_cons++;
+                        if (pHead != loops[0]->head) {
+                            tcfg_node_term(filp, head, NO_PREFIX, NO_SUFFIX);
+                            fprintf(filp, " - %d ", lp->bound);
+                            tcfg_node_term(filp, pHead, NO_PREFIX, NO_SUFFIX);
+                            fprintf(filp, " <= 0\n");
+                            total_cons++;
+                        }
 
                         tcfg_node_term(filp, head, NO_PREFIX, NO_SUFFIX);
                         tcfg_edge_t* e;

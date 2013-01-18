@@ -280,6 +280,9 @@ add_inst(int inst)
         }
     }
 
+    // Instructions always hit in the L2 cache.
+    ic_flag_l2 = IC_HIT;
+
     if ((ic_flag != IC_HIT) && (inst < plog_len || inst >= (plog_len + body_len) )) {
 	bbi_id = eg_insts[inst]->bbi_id;
 	mblk_id = eg_insts[inst]->mblk_id;
@@ -333,6 +336,8 @@ add_inst(int inst)
                 mem_access_cycles = 0;
             } else {
                 mem_access_cycles = cache.cmp;
+                // mem_lat change: Can't touch cache.cmp!
+                assert(0);
             }
             switch (eg_insts[inst]->inst->op_enum) {
                 case LDR_L:
@@ -382,7 +387,7 @@ add_inst(int inst)
 		node->lat.lo = node->lat.hi = 1;
 	    } else if (ic_flag == IC_MISS) {
                 if (ic_flag_l2 == IC_HIT) {
-                    node->lat.lo = node->lat.hi = cache.cmp + 1;
+                    node->lat.lo = node->lat.hi = cache.icmp + 1;
                 } else if (ic_flag_l2 == IC_MISS) {
                     node->lat.lo = node->lat.hi = cache.cmp + cache_l2.cmp + 1;
                 } else { /* ic_flag_l2 == IC_UNCLEAR */
@@ -391,7 +396,7 @@ add_inst(int inst)
                 }
 	    } else {
                 if (ic_flag_l2 == IC_HIT) {
-                    node->lat.hi = cache.cmp + 1;
+                    node->lat.hi = cache.icmp + 1;
                 } else /* ic_flag_l2 == IC_MISS || ic_flag_l2 == IC_UNCLEAR */{
                     node->lat.hi = cache.cmp + cache_l2.cmp + 1;
                 }
