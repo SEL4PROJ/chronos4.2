@@ -247,8 +247,8 @@ def print_constraints(conflict_file, old_cons_file, new_cons_file, pp_num):
     # need to set dA_B = 1, and also remove the flow equation for A's sources.
     # Here we construct a regexp that describes the line we're looking for.
     if entry_pp != None:
-        entry_pp_src = re.compile(r'b%d' % entry_pp[0])
-        entry_pp_edge = re.compile(r'd\d+_%d' % entry_pp[0])
+        entry_pp_src = re.compile(r'\bb%d\b' % entry_pp[0])
+        entry_pp_edge = re.compile(r'\bd\d+_%d\b' % entry_pp[0])
     else:
         entry_pp_src = None
         entry_pp_edge = None
