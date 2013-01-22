@@ -194,7 +194,7 @@ def process_conflict(fout, conflict_file):
                                 did_it = True
 
             if not did_it:
-                print "WARNING: No constraints generated!"
+                print "WARNING: No constraints generated for line: %s" % conflict_line
         else:
             assert False, "Invalid line: %s" % parts[0]
 
