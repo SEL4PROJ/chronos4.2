@@ -177,6 +177,9 @@ set_topological_tcfg(void);
 int 
 all_predecessors_visited(tcfg_node_t* bbi, char* visited);
 
+void
+dump_map_file(char *obj_file);
+
 extern tcfg_node_t     **start_point;
 extern unsigned        num_start_point;
 

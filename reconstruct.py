@@ -88,7 +88,9 @@ def read_tcfg_map(input_filename):
             \s
             \[\s
                 ([\d\s]*)
-            \] ([a-f0-9\s]*)$''',
+            \] 
+            \s([0-9]+)\s
+            ([a-f0-9\s]*)$''',
             re.VERBOSE)
 
     f = open(input_filename)
@@ -103,7 +105,7 @@ def read_tcfg_map(input_filename):
         if not g:
             continue
 
-        bb_id, bb_addr, bb_size, bb_dests, bb_context = g.groups()
+        bb_id, bb_addr, bb_size, bb_dests, bb_lphead, bb_context = g.groups()
 
         root_set.add(bb_id)
         bb_addr = int(bb_addr, 16)

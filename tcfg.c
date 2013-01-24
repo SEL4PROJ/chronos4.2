@@ -634,19 +634,11 @@ build_bbi_map(void)
 void
 prog_tran(char *obj_file)
 {
-    char s[256];
     proc_t	    *proc;
-    FILE *ftcfg;
     proc = &prog.procs[prog.main_proc];
     proc_inline(proc, NULL, NULL,0);
     collect_tcfg_edges();
     find_backedges();
-
-    sprintf(s, "%s.map", obj_file);
-    ftcfg = fopen(s, "w" );
-    dump_tcfg( ftcfg );
-    fclose( ftcfg );
-
     build_bbi_map();
 }
 
@@ -690,6 +682,11 @@ dump_tcfg(FILE *fp)
 	    fprintf(fp, "%d ", edge->dst->id);
 	}
 	fprintf(fp, "] ");
+
+        // Its loop head ID
+        fprintf(fp, "%d ", loop_map[i]?loop_map[i]->head->id:0);
+
+        // Its context
         context_t *c = bbi->ctx;
         while (c) {
             fprintf(fp, "%x ", c->callsite);
@@ -700,3 +697,12 @@ dump_tcfg(FILE *fp)
     fprintf(fp, "\n");
 }
 
+void
+dump_map_file(char *obj_file) {
+    char s[256];
+    FILE *ftcfg = NULL;
+    sprintf(s, "%s.map", obj_file);
+    ftcfg = fopen(s, "w" );
+    dump_tcfg( ftcfg );
+    fclose( ftcfg );
+}

@@ -18,6 +18,9 @@ bb_count = {}
 global edge_count
 edge_count = {}
 
+global bb_loop_head
+bb_loop_head = {}
+
 def read_tcfg_map(input_filename):
     tcfg_re = re.compile(
         r'''^
@@ -31,7 +34,9 @@ def read_tcfg_map(input_filename):
             \s
             \[\s
                 ([\d\s]*)
-            \]([0-9a-f\s]+)$''',
+            \]\s
+            ([0-9]+)\s
+            ([0-9a-f\s]+)$''',
             re.VERBOSE)
 
     f = open(input_filename)
@@ -48,12 +53,13 @@ def read_tcfg_map(input_filename):
         if not g:
             continue
 
-        bb_id, bb_addr, bb_size, bb_dests, ctx_str= g.groups()
+        bb_id, bb_addr, bb_size, bb_dests, bb_lphead, ctx_str= g.groups()
 
         #print ctx_str
 
         bb_addr = int(bb_addr, 16)
         bb_size = int(bb_size, 16)
+        bb_lphead = int(bb_lphead)
         bb_dests = [ x.strip() for x in bb_dests.split() if x.strip() ]
 
         ctx_str_list = ctx_str.split(' ')
@@ -66,6 +72,7 @@ def read_tcfg_map(input_filename):
 
         id_to_context[bb_id] = ctx_list
         bb_count[bb_id] = 0
+        bb_loop_head[bb_id] = bb_lphead
         for dest in bb_dests:
             edge_count[(bb_id, dest)] = 0
 
@@ -225,6 +232,7 @@ def process_preemptions(fout, preemption_edges, pp_num):
 def print_constraints(conflict_file, old_cons_file, new_cons_file, pp_num):
     global bb_count
     global edge_count
+    global bb_loop_head
 
     preemption_edges = read_preemption_edges(conflict_file)
     num_pp = len(preemption_edges)
@@ -249,6 +257,8 @@ def print_constraints(conflict_file, old_cons_file, new_cons_file, pp_num):
     if entry_pp != None:
         entry_pp_src = re.compile(r'\bb%d\b' % entry_pp[0])
         entry_pp_edge = re.compile(r'\bd\d+_%d\b' % entry_pp[0])
+        lphead = bb_loop_head[str(entry_pp[0])]
+        entry_pp_lp = re.compile(r'b%d(.v\d)*\s-\s\d+\sd\d+_%d(.v\d)*\s<=\s0' % (lphead, lphead))
     else:
         entry_pp_src = None
         entry_pp_edge = None
@@ -273,6 +283,12 @@ def print_constraints(conflict_file, old_cons_file, new_cons_file, pp_num):
             if g1 and g2:
                 #if discarded_pp_line:
                 #    raise Exception("Found multiple flow lines for preemption point.")
+                discarded_pp_line = True
+                continue
+
+        if entry_pp_lp != None:
+            g = entry_pp_lp.match(line)
+            if g:
                 discarded_pp_line = True
                 continue
 

@@ -208,6 +208,8 @@ path_analysis(char *fName)
     // identify loop levels as well as block-loop mapping
     loop_process();
 
+    dump_map_file(obj_file);
+
     /* vivy: infeasible path analysis */
     if( enable_infeas ) {
       strcpy(obj_file,fName);
