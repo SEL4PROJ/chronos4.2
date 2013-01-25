@@ -689,6 +689,15 @@ int readBlockCounts( char *imm_file ) {
   }
   fclose( f );
 
+  int lpid;
+  inf_loop_t *lp;
+  for (lpid = 0; lpid < num_tcfg_loops; lpid++) {
+      lp = &(inf_loops[lpid]);
+      if (lp->bound == 0) {
+        printf("No loop bound for 0x%x\n", loops[lpid]->head->bb->sa);
+      }
+  }
+
   return 0;
 }
 
