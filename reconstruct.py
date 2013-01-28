@@ -144,9 +144,11 @@ def addr2line(addr):
 
 def print_block(node_id):
     if node_id == 'Sta':
+        print '# BLOCK: Sta'
         return
     addr, size = tcfg_to_bb_map[node_id]
     space = '   ' * len(tcfg_to_context_map[node_id])
+    print '# BLOCK: %s' % node_id
     for i in xrange(0, size, 4):
         print '%#x %s%s' % (addr + i, space, addr2line(addr + i))
 
