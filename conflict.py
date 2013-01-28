@@ -278,7 +278,7 @@ def print_constraints(conflict_file, old_cons_file, new_cons_file, pp_num):
                 fout.write('dSta_0 = 0\n')
                 continue
 
-        if entry_pp_src != None:
+        if entry_pp != None:
             g1 = entry_pp_src.search(line)
             g2 = entry_pp_edge.search(line)
             if g1 and g2:
@@ -287,13 +287,13 @@ def print_constraints(conflict_file, old_cons_file, new_cons_file, pp_num):
                 discarded_pp_line = True
                 continue
 
-        if entry_pp_lp != None:
+        if entry_pp != None:
             g = entry_pp_lp.match(line)
             if g:
                 discarded_pp_line = True
                 continue
 
-        if entry_pp_lp_cons != None:
+        if entry_pp != None:
             g = entry_pp_lp_cons.match(line)
             if g:
                 discarded_pp_line = True
