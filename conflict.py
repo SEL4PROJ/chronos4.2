@@ -258,7 +258,8 @@ def print_constraints(conflict_file, old_cons_file, new_cons_file, pp_num):
         entry_pp_src = re.compile(r'\bb%d\b' % entry_pp[0])
         entry_pp_edge = re.compile(r'\bd\d+_%d\b' % entry_pp[0])
         lphead = bb_loop_head[str(entry_pp[0])]
-        entry_pp_lp = re.compile(r'b%d(.v\d)*\s-\s\d+\sd\d+_%d(.v\d)*\s<=\s0' % (lphead, lphead))
+        entry_pp_lp = re.compile(r'b%d(.v\d+)*\s-\s\d+\sd\d+_%d(.v\d+)*\s<=\s0' % (lphead, lphead))
+        entry_pp_lp_cons = re.compile(r'b%d\s-\s\d+\sb\d+\s<=\s0' % lphead)
     else:
         entry_pp_src = None
         entry_pp_edge = None
@@ -288,6 +289,12 @@ def print_constraints(conflict_file, old_cons_file, new_cons_file, pp_num):
 
         if entry_pp_lp != None:
             g = entry_pp_lp.match(line)
+            if g:
+                discarded_pp_line = True
+                continue
+
+        if entry_pp_lp_cons != None:
+            g = entry_pp_lp_cons.match(line)
             if g:
                 discarded_pp_line = True
                 continue
