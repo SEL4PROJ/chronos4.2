@@ -21,6 +21,9 @@ edge_count = {}
 global bb_loop_head
 bb_loop_head = {}
 
+global sink_bbs
+sink_bbs = set()
+
 def read_tcfg_map(input_filename):
     tcfg_re = re.compile(
         r'''^
@@ -75,6 +78,9 @@ def read_tcfg_map(input_filename):
         bb_loop_head[bb_id] = bb_lphead
         for dest in bb_dests:
             edge_count[(bb_id, dest)] = 0
+
+        if len(bb_dests) == 0 and bb_lphead == 0 and ctx_list == [0]:
+            sink_bbs.add(bb_id)
 
     f.close()
 
@@ -227,6 +233,10 @@ def process_preemptions(fout, preemption_edges, pp_num):
                 fout.write("d%d_%d = 1\n" % (src, not_preempt_dst))
             else:
                 fout.write("d%d_%d = 0\n" % (src, not_preempt_dst))
+    fout.write("\n")
+
+    # Any path must exit at some point.
+    fout.write('%s >= 1\n' % ' + '.join(['b%s' % i for i in sink_bbs]))
     fout.write("\n")
 
 def print_constraints(conflict_file, old_cons_file, new_cons_file, pp_num):
