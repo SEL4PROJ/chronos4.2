@@ -1,5 +1,5 @@
 CC=gcc
-CFLAGS=-g -DMEM_FREE -Wall -Wstrict-prototypes
+CFLAGS=-g -O3 -DMEM_FREE -Wall -Wstrict-prototypes
 #CFLAGS=-g -D_DEBUG -DMEM_FREE 
 #CFLAGS=-g -DMEM_FREE
 #CFLAGS=-g -O2 -U_FORTIFY_SOURCE
