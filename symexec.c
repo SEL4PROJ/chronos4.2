@@ -2055,7 +2055,7 @@ void doSymExec() {
 
     /*perform register expansion*/
     for( i = 0; i < prog.num_procs; i++ ) {
-        printf("procedure:%d\n",i);
+        printf("procedure:%d(%x)\n",i, inf_procs[i].proc->sa);
         cntExec=0;
         p = &(inf_procs[i]);
         ib = &(p->inf_cfg[0]);

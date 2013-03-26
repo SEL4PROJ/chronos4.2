@@ -9,14 +9,17 @@ from subprocess import Popen, PIPE
 global bb_addr_to_ids
 bb_addr_to_ids = {}
 
+global bb_id_to_addr
+bb_id_to_addr = {}
+
 global id_to_context
 id_to_context = {}
 
 global bb_count
 bb_count = {}
 
-global edge_count
-edge_count = {}
+global bb_to_dests
+bb_to_dests = {}
 
 global bb_loop_head
 bb_loop_head = {}
@@ -44,9 +47,10 @@ def read_tcfg_map(input_filename):
 
     f = open(input_filename)
 
+    global bb_id_to_addr
     global bb_addr_to_ids
     global bb_count
-    global edge_count
+    global bb_to_dests
 
     while True:
         s = f.readline()
@@ -68,6 +72,7 @@ def read_tcfg_map(input_filename):
         ctx_str_list = ctx_str.split(' ')
         ctx_list = [ int(x, 16) for x in ctx_str_list if x <> '' ]
 
+        bb_id_to_addr[bb_id] = bb_addr
         if not bb_addr in bb_addr_to_ids:
             bb_addr_to_ids[bb_addr] = [bb_id]
         else:
@@ -76,8 +81,7 @@ def read_tcfg_map(input_filename):
         id_to_context[bb_id] = ctx_list
         bb_count[bb_id] = 0
         bb_loop_head[bb_id] = bb_lphead
-        for dest in bb_dests:
-            edge_count[(bb_id, dest)] = 0
+        bb_to_dests[bb_id] = bb_dests
 
         if len(bb_dests) == 0 and bb_lphead == 0 and ctx_list == [0]:
             sink_bbs.add(bb_id)
@@ -116,6 +120,23 @@ def read_preemption_edges(conflict_file):
         bits = l.strip().split()
         if bits[0] == "preemption_point":
             preemption_edges.append(tuple([int(x, 0) for x in bits[1:4]]))
+        if bits[0] == "preemption_point_addr":
+            # Create this preemption point for every place this node
+            # occurs.
+            src_bb_addr, dst_bb_addr1, dst_bb_addr2 = [int(x, 0) for x in bits[1:4]]
+            for src_bb in bb_addr_to_ids.get(src_bb_addr, []):
+                assert len(bb_to_dests[src_bb]) == 2
+                real_dests_ids = bb_to_dests[src_bb]
+                my_dests = [dst_bb_addr1, dst_bb_addr2]
+                assert sorted([bb_id_to_addr[x] for x in real_dests_ids]) == sorted(my_dests)
+                if my_dests[0] == bb_id_to_addr[real_dests_ids[0]]:
+                    dst_bb_id1 = real_dests_ids[0]
+                    dst_bb_id2 = real_dests_ids[1]
+                else:
+                    dst_bb_id1 = real_dests_ids[1]
+                    dst_bb_id2 = real_dests_ids[0]
+                preemption_edges.append(tuple([int(x) for x in (src_bb, dst_bb_id1, dst_bb_id2)]))
+                #print "Assuming preemption point at %s -> %s, %s" % preemption_edges[-1]
 
     f.close()
     return preemption_edges
@@ -124,8 +145,8 @@ def process_conflict(fout, conflict_file):
     f = open(conflict_file)
 
     global bb_count
-    global edge_count
-    global bb_addr_to_id
+    global bb_to_dests
+    global bb_addr_to_ids
 
     fout.write('\ === conflict constraints === \n\n')
 
@@ -173,9 +194,12 @@ def process_conflict(fout, conflict_file):
                     s += ' + d%d_%d' % (a, b)
                 p = p[2:]
                 n += 1
-            s += ' <= %d\n' % (int(p[0], 0))
+            loop_head_id = int(p[0], 0)
+            s += ' <= %d * b%d\n' % (n - 1, loop_head_id)
             fout.write(s)
         elif parts[0] == "preemption_point":
+            pass
+        elif parts[0] == "preemption_point_addr":
             pass
         elif parts[0] in ("conflict", "consistent"):
             bb1_str = parts[1]
@@ -192,10 +216,6 @@ def process_conflict(fout, conflict_file):
             if bb1 in bb_addr_to_ids and bb2 in bb_addr_to_ids:
                 id_list1 = bb_addr_to_ids[bb1]
                 id_list2 = bb_addr_to_ids[bb2]
-                #if bb1 == 0xf0014c18 and bb2 == 0xf0014ad4:
-                    #print "LISTS"
-                    #print id_list1
-                    #print id_list2
                 for id1 in id_list1:
                     for id2 in id_list2:
                         if context_match(id_to_context[id1], id_to_context[id2], start, end, id1, id2):
@@ -207,7 +227,7 @@ def process_conflict(fout, conflict_file):
                                 did_it = True
 
             if not did_it:
-                print "WARNING: No constraints generated for line: %s" % conflict_line
+                print >>sys.stderr, "WARNING: No constraints generated for line: %s" % conflict_line
         else:
             assert False, "Invalid line: %s" % parts[0]
 
@@ -241,24 +261,24 @@ def process_preemptions(fout, preemption_edges, pp_num):
 
 def print_constraints(conflict_file, old_cons_file, new_cons_file, pp_num):
     global bb_count
-    global edge_count
+    global bb_to_dests
     global bb_loop_head
 
     preemption_edges = read_preemption_edges(conflict_file)
     num_pp = len(preemption_edges)
-    print "Have %d preemption points" % num_pp
+    #print "Have %d preemption points" % num_pp
     entry_pp = None
     if num_pp > 0:
         if pp_num != None:
             assert 0 <= pp_num <= num_pp
             if pp_num == 0:
-                print "Exercising pps from START"
+                print >>sys.stderr, "Exercising pps from START (of %d)" % num_pp
                 entry_pp = None
             else:
-                print "Exercising pps from %d" % (pp_num)
+                print >>sys.stderr, "Exercising pps from %d of %d" % (pp_num, num_pp)
                 entry_pp = preemption_edges[pp_num - 1]
         else:
-            print "But not doing anything about it. Iterate from 0 .. %d." % num_pp
+            print >>sys.stderr, "But not doing anything about it. Iterate from 0 .. %d." % num_pp
 
     # If we want to start the CFG at some other point, we need to fudge the
     # flow equations. If we're forcing the edge A->B as our starting point, we
@@ -322,10 +342,15 @@ def print_constraints(conflict_file, old_cons_file, new_cons_file, pp_num):
 
 if __name__ == '__main__':
     if not (5 <= len(sys.argv) <= 6):
-        print "Usage: conflict <tcfg map> <conflict file> <old constraints file> <new constraints file> [preemption point number]"
+        print >>sys.stderr, "Usage: conflict <tcfg map> <conflict file> <old constraints file> <new constraints file> [preemption point number]"
         sys.exit(1)
     read_tcfg_map(sys.argv[1])
     pp_num = None
     if len(sys.argv) > 5:
         pp_num = int(sys.argv[5])
-    print_constraints(sys.argv[2], sys.argv[3], sys.argv[4], pp_num)
+    if pp_num == -1:
+        # Just print the number of preemption points, and exit.
+        preemption_edges = read_preemption_edges(sys.argv[2])
+        print len(preemption_edges)
+    else:
+        print_constraints(sys.argv[2], sys.argv[3], sys.argv[4], pp_num)

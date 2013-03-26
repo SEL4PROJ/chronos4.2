@@ -209,7 +209,7 @@ def follow():
 
         # Do we need to accelerate matters for long loops?
         # We can accelerate once we have been through the loop once.
-        if local_path_counts[node_id][dest_id] > 100 and dest_id in seen_set:
+        if local_path_counts[node_id][dest_id] > 300 and dest_id in seen_set:
             # Find dest_id in the stack, starting from the end.
             for repeat_idx in xrange(len(stack) - 1, -1, -1):
                 if dest_id == stack[repeat_idx]:

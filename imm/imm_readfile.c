@@ -434,8 +434,10 @@ decode_instruction_line(const char *line, prog_t *prog)
             }
             inst->is_call = 1;
             num_outedges++;
+#if 0
             if (addr == preemption_addr) 
                 inst->preemption = 1;
+#endif
         } else if (strncmp("tailcall ", s, 9) == 0) {
             /* Read address. */
             uint32_t addr;

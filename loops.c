@@ -381,7 +381,7 @@ map_dfs_helper(int node_id, int *visited, int *am_ancestor, int *node_seq, loop_
         //      candidate for us.
 
         if (loop_map[node_id] == NULL) {
-            printf("ERROR: node %d is not mapped to a loop yet.\n", node_id);
+            printf("ERROR: node %d (%x) is not mapped to a loop yet.\n", node_id, tcfg[node_id]->bb->sa);
             assert(loop_map[node_id] != NULL);
         }
 

@@ -276,7 +276,7 @@ sym_loadsyms(char *fname)
 
     /* get the preemption point function address */
     if (strcmp(sym_name, "preemptionPoint") == 0) {
-        preemption_addr = address;
+        //preemption_addr = address;
     }
 
     if (flags[0] == 't')
