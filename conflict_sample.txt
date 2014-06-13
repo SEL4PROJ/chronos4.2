@@ -1,0 +1,222 @@
+# In finaliseCapUnexposed, cap types handled by finaliseCapTryExposed
+# are distinct from the types handled by finaliseCapUnexposed
+conflict
+0xf00152ec
+0xf00149f8
+0xf00152b0
+0xf001541c
+conflict
+0xf00152ec
+0xf0014a4c
+0xf00152b0
+0xf001541c
+conflict
+0xf00152ec
+0xf0014a64
+0xf00152b0
+0xf001541c
+conflict
+0xf00152ec
+0xf0014a28
+0xf00152b0
+0xf001541c
+# We don't need to reschedule after activating the current thread
+conflict
+0xf0010db4
+0xf0016ea0
+0xf0016ea0
+0xf0016ee4
+# We know caps in installed in the TCB are not final
+conflict
+0xf0012f10
+0xf0015c90
+0xf0015c90
+0xf001685c
+# This ensures that the cteDelete in decodeTCBInvocation deletes a
+# cspace
+consistent
+0xf0015b14
+0xf001531c
+0xf0015c90
+0xf001685c
+# This ensures that the cteDelete in decodeTCBInvocation deletes a
+# vspace
+consistent
+0xf0015b84
+0xf0013fcc
+0xf0015c90
+0xf001685c
+conflict
+0xf0013fcc
+0xf00140e8
+0xf001685c
+0xf0015b84
+conflict
+0xf0013fcc
+0xf0013fe4
+0xf001685c
+0xf0015b84
+# This ensures that the cteDelete in decodeTCBInvocation deletes a
+# frame
+consistent
+0xf0015bcc
+0xf00140f4
+0xf001685c
+0xf0015b84
+# doReplyTransfer's call to cteDeleteOne deletes a reply cap.
+conflict
+0xf0014fe0
+0xf00149f8
+0xf0014fe0
+0xf00151dc
+conflict
+0xf0014fe0
+0xf00149e0
+0xf0014fe0
+0xf00151dc
+conflict
+0xf0014fe0
+0xf0014a28
+0xf0014fe0
+0xf00151dc
+conflict
+0xf0014fe0
+0xf0014a64
+0xf0014fe0
+0xf00151dc
+consistent
+0xf0012ff0
+0xf0012a90
+0xf0014fe0
+0xf00151dc
+# deleteCallerCap only deletes a reply cap. - eliminate
+# finaliseCapTryExposed
+conflict
+0xf0017050
+0xf00149f8
+0xf0017050
+0xf001736c
+conflict
+0xf0017050
+0xf00149e0
+0xf0017050
+0xf001736c
+conflict
+0xf0017050
+0xf0014a28
+0xf0017050
+0xf001736c
+conflict
+0xf0017050
+0xf0014a64
+0xf0017050
+0xf001736c
+# Same as above, but for sameRegionAs
+consistent
+0xf0012ff0
+0xf0012a90
+0xf0017050
+0xf001736c
+# success of lookupTargetSlot in getReceiveSlots concurs with
+# success of getReceiveSlots (inlined within doIPCTransfer)
+consistent
+0xf0011534
+0xf0013804
+0xf00132f8
+0xf0013814
+# success of lookupTargetSlot in decodeCNodeInvocation concurs with
+# success of decodeCNodeInvocation
+consistent
+0xf0011534
+0xf0016908
+0xf0016870
+0xf0016e90
+consistent
+0xf0011534
+0xf00116cc
+0xf0016870
+0xf0016e90
+# success of lookupCapAndSlot in handleInvocation concurs with success
+# of resolveAddressBits.
+consistent
+0xf0018e98
+0xf0011534
+0xf0018e48
+0xf00190a0
+# success of lookupSlotForCNodeOp in concurs with success of
+# resolveAddressBits.
+consistent
+0xf00116cc
+0xf0011534
+0xf00115e0
+0xf0011714
+# success of lookupExtraCaps in concurs with success of
+# resolveAddressBits.
+consistent
+0xf001273c
+0xf0011534
+0xf00125d0
+0xf0012788
+# Only one receive slot is ever used in each direction (at most 2 for
+# a call or reply/wait)
+times
+2
+0xf001354c
+# Caps only transfer if all lookups were successful.
+consistent
+0xf001273c
+0xf00134e0
+0xf00132f8
+0xf0013814
+# In a ReplyWait, the wait will not need to delete the replycap. We do this
+# by making handleWait consistent with cteDeleteOne's short-circuit case,
+# which you might think is bad because a Wait alone could be the worst case,
+# but isn't actually bad, because if a Wait had a worst case of x, a
+# ReplyWait would be even worse.
+consistent
+0xf0014c20
+0xf0017050
+0xf0017050
+0xf001736c
+# success of lookupCap in handleWait concurs with
+# success of getReceiveSlots
+conflict
+0xf0011554
+0xf001709c
+0xf0017050
+0xf001736c
+conflict
+0xf00114f8
+0xf001709c
+0xf0017050
+0xf001736c
+# sendFaultIPC (inlined into handleFault) does not cause a doNormalTransfer
+consistent
+0xf0016f20
+0xf001370c
+0xf0016f20
+0xf001704c
+consistent
+0xf0013704
+0xf001370c
+0xf0016f20
+0xf001704c
+conflict
+0xf0013714
+0xf001370c
+0xf0016f20
+0xf001704c
+# In the context of handleReply, possibleSwitchTo would never call
+# rescheduleRequired, as we would not have previously scheduled a new
+# thread.
+conflict
+0xf00151e8
+0xf0010e88
+0xf00151e8
+0xf0015228
+# In any kernel execution, at most three threads will ever be enqueued onto
+# the scheduler's run queue: the currently running thread, a thread who
+# we're replying to, and the thread who we just waited for.
+times
+3
+0xf0010d34
