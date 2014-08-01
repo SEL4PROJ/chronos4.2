@@ -458,16 +458,34 @@ void virtual_unroll() {
 
 
 extern int bdepth;
+
+int callers[1024];
+
+static int
+check_existed_caller(int id, int depth) {
+    int i;
+    for (i = 0; i < depth; ++i)
+        if (callers[i] == id)
+            return 1;
+    return 0;
+}
+
 // create a proc instance (virtual inlining), it may recursively call itself if proc
 // calls are encountered in current proc, if this proc is called by some block,
 // call_bb is the caller and ret_bb is the block to return to (thus correponding tcfg
 // edges should be constructed); otherwise they are NULL
 static void
-proc_inline(proc_t *proc, tcfg_node_t *call_bbi, tcfg_node_t *ret_bbi, int depth)
+proc_inline(proc_t *proc, tcfg_node_t *call_bbi, tcfg_node_t *ret_bbi, int depth, int call_depth)
 {
     int		i;
     cfg_node_t	*bb;
     tcfg_node_t	**sub_tcfg;
+
+    if (check_existed_caller(proc->id, call_depth)) {
+        fprintf(stderr, "Ignore inlining proc %d\n", proc->id);
+        return;
+    }
+    callers[call_depth] = proc->id;
 
     sub_tcfg = (tcfg_node_t **) calloc(proc->num_bb + 1, sizeof(tcfg_node_t *));
     CHECK_MEM(sub_tcfg);
@@ -496,7 +514,7 @@ proc_inline(proc_t *proc, tcfg_node_t *call_bbi, tcfg_node_t *ret_bbi, int depth
 	   * needs to refine later
 	   */
 	  if( proc->cfg[i].callee != proc->cfg[i].proc ){
-	    proc_inline(proc->cfg[i].callee, sub_tcfg[i], sub_tcfg[i+1],0);
+	    proc_inline(proc->cfg[i].callee, sub_tcfg[i], sub_tcfg[i+1], 0, call_depth+1);
           }
 	  else{
 	    //fprintf( stderr, "Recursive function detected: call to self at proc %d bb %d.\n", proc->cfg[i].proc->id, proc->cfg[i].id );
@@ -504,7 +522,7 @@ proc_inline(proc_t *proc, tcfg_node_t *call_bbi, tcfg_node_t *ret_bbi, int depth
                  continue;
               if(test_depth(proc->id, depth + 1) ){
                   //printf("%d-> ",proc->id);  
-                  proc_inline(proc->cfg[i].callee, sub_tcfg[i], sub_tcfg[i+1], depth + 1); 
+                  proc_inline(proc->cfg[i].callee, sub_tcfg[i], sub_tcfg[i+1], depth + 1, call_depth+1); 
                } else{
                 //fprintf(stderr,"out of depth limit for procedure %d\n",proc->id);
              }
@@ -636,7 +654,7 @@ prog_tran(char *obj_file)
 {
     proc_t	    *proc;
     proc = &prog.procs[prog.main_proc];
-    proc_inline(proc, NULL, NULL,0);
+    proc_inline(proc, NULL, NULL, 0, 0);
     collect_tcfg_edges();
     find_backedges();
     build_bbi_map();
