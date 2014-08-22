@@ -440,6 +440,34 @@ loop_check(proc_t *proc, int start, int end)
 }
 #endif
 
+
+// Cut the edge to the dst with greater address
+static void
+remove_edge(cfg_node_t *bb) {
+    cfg_edge_t *e0 = bb->out_t;
+    cfg_edge_t *e1 = bb->out_n;
+    cfg_node_t *d0 = e0->dst;
+    cfg_node_t *d1 = e1->dst;
+    if (d0->sa > d1->sa) {
+        // Cut e0
+        printf("Cut edge %x->%x\n", bb->sa, d0->sa);
+        d0->loop_role &= ~LOOP_HEAD;
+        d0->loop_role |= LOOP_TAIL;
+        d1->loop_role &= ~LOOP_TAIL;
+        d1->loop_role |= LOOP_HEAD;
+        bb->out_t = NULL;
+    }
+    else {
+        // Cut e1
+        printf("Cut edge %x->%x\n", bb->sa, d1->sa);
+        d0->loop_role &= ~LOOP_TAIL;
+        d0->loop_role |= LOOP_HEAD;
+        d1->loop_role &= ~LOOP_HEAD;
+        d1->loop_role |= LOOP_TAIL;
+        bb->out_n = NULL;
+    }
+}
+
 static void
 find_backedges_recursive(proc_t *proc, int bb_id, int *visited, int *am_ancestor)
 {
@@ -466,6 +494,8 @@ find_backedges_recursive(proc_t *proc, int bb_id, int *visited, int *am_ancestor
     int i;
     for (i = 0; i < 2; i++) {
         cfg_edge_t *e = edges[i];
+        // The other edge
+        cfg_edge_t *e0 = (e==edges[0])?edges[1]:edges[0];
         if (e == NULL)
             continue;
 
@@ -475,9 +505,22 @@ find_backedges_recursive(proc_t *proc, int bb_id, int *visited, int *am_ancestor
         int dst_bb_id = dst_bb->id;
         if (!visited[dst_bb_id]) {
             find_backedges_recursive(proc, dst_bb_id, visited, am_ancestor);
-        } else if (am_ancestor[dst_bb_id]) {
-            bb->loop_role |= LOOP_TAIL;
-            dst_bb->loop_role |= LOOP_HEAD;
+        } else {
+            if (am_ancestor[dst_bb_id]) {
+                bb->loop_role |= LOOP_TAIL;
+                dst_bb->loop_role |= LOOP_HEAD;
+            }
+            else {
+                // To determine if there is a multi-entry loop
+                // If so, remove an edge
+                // Make sure that the block with less address is the loop head
+                if (e0 && (dst_bb->loop_role & LOOP_TAIL) && (e0->dst->loop_role & LOOP_HEAD)) {
+                    if (dst_bb->out_t && dst_bb->out_t->dst == e0->dst)
+                        remove_edge(bb);
+                    else if (dst_bb->out_n && dst_bb->out_n->dst == e0->dst)
+                        remove_edge(bb);
+                }
+            }
         }
     }
 

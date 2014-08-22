@@ -248,7 +248,7 @@ find_loops(void)
 	if (bbi_backedge(e)) {
 	    if (loop_map[e->dst->id] != NULL)
 		continue;
-	    if (bb_is_loop_head(e->dst->bb) && bb_is_loop_tail(e->src->bb))
+	    if (bb_is_loop_head(e->dst->bb) && bb_is_loop_tail(e->src->bb)) 
 		loop_map[e->dst->id] = loop_map[e->src->id] = new_loop(e);
 	}
     }
