@@ -26,6 +26,7 @@
 #include "imm/symbol.h"
 
 extern prog_t	prog;
+extern int      max_recursive_calls;
 tcfg_node_t	**tcfg;
 int		num_tcfg_nodes = 0, tcfg_size = 0;
 tcfg_edge_t	**tcfg_edges;
@@ -463,11 +464,11 @@ int callers[1024];
 
 static int
 check_existed_caller(int id, int depth) {
-    int i;
+    int i, count = 0;
     for (i = 0; i < depth; ++i)
         if (callers[i] == id)
-            return 1;
-    return 0;
+            ++count;
+    return count >= max_recursive_calls;
 }
 
 // create a proc instance (virtual inlining), it may recursively call itself if proc
@@ -483,6 +484,8 @@ proc_inline(proc_t *proc, tcfg_node_t *call_bbi, tcfg_node_t *ret_bbi, int depth
 
     if (check_existed_caller(proc->id, call_depth)) {
         fprintf(stderr, "Ignore inlining proc %d\n", proc->id);
+        // If we ignore the inlining, just connect call_bbi and ret_bbi
+        new_tcfg_edge(call_bbi, ret_bbi, TAKEN);
         return;
     }
     callers[call_depth] = proc->id;
@@ -654,6 +657,7 @@ prog_tran(char *obj_file)
 {
     proc_t	    *proc;
     proc = &prog.procs[prog.main_proc];
+    printf("Maximum depth of recursive calls = %d\n", max_recursive_calls);
     proc_inline(proc, NULL, NULL, 0, 0);
     collect_tcfg_edges();
     find_backedges();

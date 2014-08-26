@@ -584,7 +584,7 @@ main(int argc, char **argv){
 
     init_isa();
     
-	 /* read options including (1) actions; (2) processor configuration */
+    /* read options including (1) actions; (2) processor configuration */
     read_opt(argc, argv);
     
     /* liangyun: read jump table if necessary */   

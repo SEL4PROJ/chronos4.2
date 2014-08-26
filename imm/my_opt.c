@@ -173,6 +173,9 @@ int nsets_l2, bsize_l2, assoc_l2;
 /* options for level 2 data cache */
 int nsets_dl2, bsize_dl2, assoc_dl2;
 
+/* maximum occurances of a function in the call string */
+int max_recursive_calls;
+
 /*
  * functional unit resource configuration
  */
@@ -468,6 +471,10 @@ sim_reg_options(struct opt_odb_t *odb)
 	      "total number of floating point multiplier/dividers available",
 	      &res_fpmult, /* default */fu_config[FU_FPMULT_INDEX].quantity,
 	      /* print */TRUE, /* format */NULL);
+
+  opt_reg_int(odb, "-recursive",
+              "maximum occurance of a function in the call string",
+              &max_recursive_calls, 1, TRUE, NULL);
 
   // register my options
   opt_reg_string(odb, "-run",
