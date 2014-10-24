@@ -64,6 +64,8 @@ def read_tcfg_map(input_filename):
         else:
             bb_addr_to_ids[bb_addr].append(bb_id)
 
+        if ctx_list[0] == 0:
+            ctx_list.pop(0)
         id_to_context[bb_id] = ctx_list
         bb_count[bb_id] = 0
         for dest in bb_dests:
