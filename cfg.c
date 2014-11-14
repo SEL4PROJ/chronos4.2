@@ -490,6 +490,10 @@ find_backedges_recursive(proc_t *proc, int bb_id, int *visited, int *am_ancestor
     cfg_edge_t *edges[2];
     edges[0] = bb->out_t;
     edges[1] = bb->out_n;
+    if (edges[0] && edges[1] && edges[0]->dst->sa > edges[1]->dst->sa) {
+        edges[0] = bb->out_n;
+        edges[1] = bb->out_t;
+    }
 
     int i;
     for (i = 0; i < 2; i++) {
