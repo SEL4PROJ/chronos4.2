@@ -492,26 +492,23 @@ proc_inline(proc_t *proc, tcfg_node_t *call_bbi, tcfg_node_t *ret_bbi, int depth
 
     sub_tcfg = (tcfg_node_t **) calloc(proc->num_bb + 1, sizeof(tcfg_node_t *));
     CHECK_MEM(sub_tcfg);
-
     // 1. create tcfg nodes of the corresponding proc & remember them in the map
     for (i = 0; i < proc->num_bb; i++) {
-	if (num_tcfg_nodes >= tcfg_size) {
+	    if (num_tcfg_nodes >= tcfg_size) {
 	    // tcfg store is full, need to realloc memory for more tcfg nodes
 	    if (tcfg_size == 0)
-	        tcfg_size = 64;
-	    else
-	        tcfg_size *= 2;
-	    tcfg = (tcfg_node_t **) realloc(tcfg, tcfg_size * sizeof(tcfg_node_t *));
-	}
-	sub_tcfg[i] = tcfg[num_tcfg_nodes] = new_tcfg_node(&proc->cfg[i],
+	             tcfg_size = 64;
+	        else
+	            tcfg_size *= 2;
+	        tcfg = (tcfg_node_t **) realloc(tcfg, tcfg_size * sizeof(tcfg_node_t *));
+	    }
+	    sub_tcfg[i] = tcfg[num_tcfg_nodes] = new_tcfg_node(&proc->cfg[i],
                       call_bbi?call_bbi->bb->sa+call_bbi->bb->size-4:0, call_bbi?call_bbi->ctx:NULL);
-	num_tcfg_nodes++;
+	    num_tcfg_nodes++;
     }
-
     // 2. recursively create proc instance for callees
     for (i = 0; i < proc->num_bb; i++) {
 	   if (proc->cfg[i].type == CTRL_CALL) {
-
 	  /* vivy: guard against recursive function
 	   * for now, ignore the call
 	   * needs to refine later
@@ -520,17 +517,17 @@ proc_inline(proc_t *proc, tcfg_node_t *call_bbi, tcfg_node_t *ret_bbi, int depth
 	    proc_inline(proc->cfg[i].callee, sub_tcfg[i], sub_tcfg[i+1], 0, call_depth+1);
           }
 	  else{
-	    //fprintf( stderr, "Recursive function detected: call to self at proc %d bb %d.\n", proc->cfg[i].proc->id, proc->cfg[i].id );
+	    fprintf( stderr, "Recursive function detected: call to self at proc %d bb %d.\n", proc->cfg[i].proc->id, proc->cfg[i].id );
               if(!bdepth)
                  continue;
               if(test_depth(proc->id, depth + 1) ){
-                  //printf("%d-> ",proc->id);  
+                  printf("%d-> ",proc->id);  
                   proc_inline(proc->cfg[i].callee, sub_tcfg[i], sub_tcfg[i+1], depth + 1, call_depth+1); 
                } else{
                 //fprintf(stderr,"out of depth limit for procedure %d\n",proc->id);
              }
           }
-	}
+	   }
     }
 
     // 3. create tcfg nodes with the help of the map
@@ -569,6 +566,7 @@ proc_inline(proc_t *proc, tcfg_node_t *call_bbi, tcfg_node_t *ret_bbi, int depth
 	    new_tcfg_edge(sub_tcfg[i], sub_tcfg[bb->id], TAKEN);
 	}
     }
+
 
     free(sub_tcfg);
 }

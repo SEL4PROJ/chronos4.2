@@ -71,14 +71,18 @@ scan_procs(int *proc_ent)
     for (i = 0; i < prog.num_inst; i++) {
 	// check whether this instr. is the main entrance; mark it if so
 	if (prog.code[i].addr == prog.main_addr) {
-            printf("Found main procedure at 0x%x\n", prog.main_addr);
+        //printf("Found main procedure at 0x%x\n", prog.main_addr);
 	    if (proc_ent[i] == 0) {
-		proc_ent[i] = 1;
-		prog.num_procs++;
-		main_id = i;
+		    proc_ent[i] = 1;
+		    prog.num_procs++;
+		    main_id = i;
 	    }
+        //without this else clause, if the main proc is called at an addr < main_addr, the main_id will be a mess.
+        else{
+            main_id = i;  
+        }
 	} 
-        if (inst_type(&prog.code[i]) == INST_CALL) {
+    if (inst_type(&prog.code[i]) == INST_CALL) {
 	    // check the target addr of a call; mark it as proc entrance if not
 	    // marked yet.
             assert(prog.code[i].num_targets == 1);
@@ -92,8 +96,8 @@ scan_procs(int *proc_ent)
 		   exit(1);
 	    }
 	    if (proc_ent[tid] == 0) {
-		proc_ent[tid] = 1;
-		prog.num_procs++;
+		    proc_ent[tid] = 1;
+		    prog.num_procs++;
 	    }
 	}
     }
@@ -319,8 +323,8 @@ create_cfg_edges(proc_t *proc)
 	} else if (type == INST_RET) {
 	    // do not create any edge
 	    bb->type = CTRL_RET;
-            
             if (is_conditional) {
+                printf ("createing fall-through edge\n");
                 // create fall-through edge
                 assert(i < proc->num_bb - 1);
                 bb1 = &proc->cfg[i+1];
@@ -356,10 +360,12 @@ create_cfg_edges(proc_t *proc)
                     }
                 }
             }
-	    if (type == INST_CALL) 
-		bb->type = CTRL_CALL;
-	    else
-		bb->type = CTRL_SEQ;
+	    if (type == INST_CALL){ 
+		    bb->type = CTRL_CALL;
+        }
+	    else{
+		    bb->type = CTRL_SEQ;
+        }
 	}
     }
 }
@@ -550,7 +556,7 @@ identify_loops(proc_t *proc)
         proc->cfg[i].flags = 0;
 }
 
-
+/
 
 // create a CFG for a proc in three steps:
 // - find basic block entries and create basic blocks
@@ -565,8 +571,6 @@ create_cfg(proc_t *proc)
     cfg_node_t	*bb;
     addr_t	addr;
     proc_t	*callee;
-    
-    
 
     assert(proc->num_inst > 0);
     bb_ent = (int *) calloc(proc->num_inst, sizeof(int));
@@ -621,6 +625,10 @@ create_cfg(proc_t *proc)
     if (bb_id != proc->num_bb) {
         printf("Got %d basic blocks, wanted %d - had an extra %d\n",
 		bb_id, proc->num_bb, bb_id - proc->num_bb);
+        for (i = 0; i < bb_id; i++) {
+            printf("BB %d at 0x%lx has %d instructions\n",
+                  i, (unsigned long)proc->cfg[i].sa, proc->cfg[i].num_inst);
+        }
         assert(bb_id == proc->num_bb);
     }
     free(bb_ent);
@@ -677,8 +685,9 @@ build_cfgs()
 	    proc->size = prog.code[i].size;
 	    proc->num_inst = 1;
 	    proc->code = &prog.code[i];
-	    if (i == main_id)
-		prog.main_proc = proc_id;
+	    if (i == main_id){
+		    prog.main_proc = proc_id;
+        }
 #if 0
 		printf("Proc %d at 0x%x\n", proc_id, proc->sa);
 #endif
@@ -696,6 +705,7 @@ build_cfgs()
             assert(prog.code[i].addr + 4 == proc->sa + proc->size);
 	}
     }
+
     free(proc_ent);
 
     assert(prog.num_procs == proc_id);
@@ -711,18 +721,10 @@ build_cfgs()
                 prog.procs[i].num_inst
                 );
 #endif
-	create_cfg(&prog.procs[i]);
+    create_cfg(&prog.procs[i]);
 	//dump_cfg(stdout, &prog.procs[i]);
     }
 }
-
-
-
-
-
-
-
-
 
 
 void

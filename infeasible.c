@@ -289,6 +289,7 @@ void readInstr( char *obj_file ) {
   int **callees = (int**) malloc( prog.num_procs * sizeof(int*) );
   for( i = 0; i < prog.num_procs; i++ )
     callees[i] = NULL;
+    
 
   // transfer information that is already parsed
   inf_procs = (inf_proc_t*) malloc( prog.num_procs * sizeof(inf_proc_t) );
@@ -302,8 +303,18 @@ void readInstr( char *obj_file ) {
 
     for( j = 0; j < ip->num_bb; j++ ) {
       b  = &(p->cfg[j]);
+      printf("bb_start_addr: %x\n" , b->sa);
+      if (b->sa == 0xf001074c){
+        printf("num_bb: %d\n", ip->num_bb);
+        printf("i: %d, j: %d\n", i,j);
+        }
       ib = &(ip->inf_cfg[j]);
+      //problem is in the bbi line
+      printf("%s:%d\n",__func__,__LINE__);
+      tcfg_nlink_t **bbi_map_map = bbi_map[i];
+      printf("%s:%d\n",__func__,__LINE__);
       bbi = bbi_map[i][j]->bbi;
+      printf("%s:%d\n",__func__,__LINE__);
 
       ib->bb = b;
       ib->num_insn = b->num_inst;
@@ -313,14 +324,15 @@ void readInstr( char *obj_file ) {
       ib->branch = NULL;
       ib->loop_id = (loop_map[bbi->id] == NULL)?0:loop_map[bbi->id]->id;
       ib->exec_count = -1;
+      
 
       for( k = 0; k < ib->num_insn; k++ ) {
-	if (b->code == NULL) {
-	    d = NULL;
-	} else {
-	    d  = &(b->code[k]);
-	}
-	ib->insnlist[k] = d;
+	    if (b->code == NULL) {
+	        d = NULL;
+	    } else {
+	        d  = &(b->code[k]);
+	    }
+	    ib->insnlist[k] = d;
 
 #if 0
         sprintf( is->addr, "%x", d->addr );
@@ -547,10 +559,12 @@ int readBlockCounts( char *imm_file ) {
 
   inf_proc_t *ip;
 
+    printf("%s: %s, line %d\n",__FILE__,__func__,__LINE__);
   for( i = 0; i < num_tcfg_nodes; i++ ) {
     tcfg[i]->loop_id = -1;
     tcfg[i]->exec_count = -1;
   }
+    printf("%s: %s, line %d\n",__FILE__,__func__,__LINE__);
   printf("There are %d tcfg nodes\n", num_tcfg_nodes);
 
 #if 0
@@ -702,14 +716,17 @@ int readBlockCounts( char *imm_file ) {
 }
 
 void infeas_analysis( char *obj_file ) {
-  int dbg = 0;
+  int dbg = 1;
+  printf("%s: %s, line %d\n",__FILE__,__func__,__LINE__);
   if (dbg) {
     printf("\nAnalyze file |%s|\n",obj_file);fflush(stdout);
     printf( "Read Instr...\n" ); fflush(stdout);
     printf( "Read Block Counts...\n" ); fflush(stdout);
   }
   readInstr( obj_file );
+    printf("%s: %s, line %d\n",__FILE__,__func__,__LINE__);
   readBlockCounts( obj_file );
+    printf("%s: %s, line %d\n",__FILE__,__func__,__LINE__);
 
   //printInstructions();
 

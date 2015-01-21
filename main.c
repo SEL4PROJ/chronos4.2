@@ -193,10 +193,8 @@ path_analysis(char *fName)
     // read object code, decode it
     strcpy(obj_file,fName);
     read_code(obj_file);
-
     // create procs and their CFGs from the decoded text
     build_cfgs();
-
     // vivy: read list of functions to include in estimation
     // do this after prog.procs are established
     strcpy(obj_file,fName);
@@ -217,22 +215,21 @@ path_analysis(char *fName)
     }
 
         /********************************************/
-        if (enable_scp_dcache) {
-                extern int assoc_dl1, nsets_dl1, bsize_dl1, mem_lat[2];
-                X = assoc_dl1, Y = nsets_dl1, B = bsize_dl1, l1 = mem_lat[0], l2 = 0;
-                scp_pre_address_analysis(fName, &scp_addrset_l1);
-                if (enable_scp_dl2cache || enable_ul2cache) {
-                        extern int assoc_dl2, nsets_dl2, bsize_dl2, cache_dl2_lat;
-                        X = assoc_dl2, Y = nsets_dl2, B = bsize_dl2, l1 = cache_dl2_lat, l2 =
-                                        mem_lat[0];
-
-                        scp_pre_address_analysis(fName, &scp_addrset_l2);
-                }
-                /*
-                 * TODO: perform address analysis here, store the addresses in ...
-                 */
-                scp_store_address_set();
-        } else {
+    if (enable_scp_dcache) {
+            extern int assoc_dl1, nsets_dl1, bsize_dl1, mem_lat[2];
+            X = assoc_dl1, Y = nsets_dl1, B = bsize_dl1, l1 = mem_lat[0], l2 = 0;
+            scp_pre_address_analysis(fName, &scp_addrset_l1);
+            if (enable_scp_dl2cache || enable_ul2cache) {
+                extern int assoc_dl2, nsets_dl2, bsize_dl2, cache_dl2_lat;
+                X = assoc_dl2, Y = nsets_dl2, B = bsize_dl2, l1 = cache_dl2_lat, l2 =
+                                      mem_lat[0];
+                scp_pre_address_analysis(fName, &scp_addrset_l2);
+            }
+            /*
+             * TODO: perform address analysis here, store the addresses in ...
+             */
+            scp_store_address_set();
+    } else {
                 /*
                  * set loop-bound for loops
                  * NOTE: If scp_enable_dcache is enabled ,
@@ -603,12 +600,10 @@ main(int argc, char **argv){
       run_cfg( str );
       return 0;
     }
-
 //    enable_infeas = 1;
 
     strcpy(str,fName);
     path_analysis(str);
-
     strcpy(str, fName);
     analyze_cache_hierarchy();
     //scope-aware PS analysis for dcache
