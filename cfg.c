@@ -556,7 +556,6 @@ identify_loops(proc_t *proc)
         proc->cfg[i].flags = 0;
 }
 
-/
 
 // create a CFG for a proc in three steps:
 // - find basic block entries and create basic blocks
