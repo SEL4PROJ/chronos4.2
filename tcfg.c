@@ -524,7 +524,7 @@ proc_inline(proc_t *proc, tcfg_node_t *call_bbi, tcfg_node_t *ret_bbi, int depth
                   printf("%d-> ",proc->id);  
                   proc_inline(proc->cfg[i].callee, sub_tcfg[i], sub_tcfg[i+1], depth + 1, call_depth+1); 
                } else{
-                //fprintf(stderr,"out of depth limit for procedure %d\n",proc->id);
+                fprintf(stderr,"out of depth limit for procedure %d\n",proc->id);
              }
           }
 	   }

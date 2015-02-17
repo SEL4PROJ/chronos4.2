@@ -428,6 +428,7 @@ void read_recursive(char * objfile){
      char file[100];
      FILE *ftable;
      int size,i;
+     
      sprintf(file,"%s.recursive",objfile);
      ftable = fopen(file,"r");
      if(!ftable){

@@ -474,7 +474,7 @@ sim_reg_options(struct opt_odb_t *odb)
 
   opt_reg_int(odb, "-recursive",
               "maximum occurance of a function in the call string",
-              &max_recursive_calls, 1, TRUE, NULL);
+              &max_recursive_calls, 2, TRUE, NULL);
 
   // register my options
   opt_reg_string(odb, "-run",

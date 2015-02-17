@@ -1611,12 +1611,19 @@ void analyze_abs_instr_cache_all() {
 	initialize_CHMC();
 
 	/* Do must analysis in instruction cache */
-	analyze_abs_instr_cache(MUST);
-	/* Do may analysis in instruction cache */
+	printf("doing must analysis...\n");
+    analyze_abs_instr_cache(MUST);
+	printf("must analysis done\n");
+	
+	printf("doing may analysis...\n");
+    /* Do may analysis in instruction cache */
 	analyze_abs_instr_cache(MAY);
+	printf("may analysis done\n");
+
 	/* Do persistence analysis for instruction cache */
 	//analyze_abs_instr_cache(PERSISTENCE);
 	if (enable_il2cache) {
+        printf("doing il2cache analysis\n");
 		/* set advanced L2 cache features */
 		set_cache_l2();
 		/* Set L2 cache parameters */
