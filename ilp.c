@@ -2230,18 +2230,12 @@ void scp_context_cons(void) {
                                                 num_context << 1, BP_NONE, NO_PREFIX, NO_SUFFIX);
                                 for (e = lpHead->in; e != NULL; e = e->next_in)
                                         if (scp_cmpLpOrder(loop_map[e->src->id]->id, lp->id) <= 0) { //TODO: cmplporder <= 0
-                                                /*
-                                                if (lp->bound -1 < 0){
-                                                    //we can't emit - -, emit + instead
-                                                    fprintf(filp, " + %d ", -1 * (lp->bound - 1));
-                                                }
-                                                else{
+                                                if (lp->bound != 0){
+                                                    //if lp->bound is 0, this node is completely unreachable (same as the lp->bound = 1 case, just emit thisNode <= 0.
                                                     fprintf(filp, " - %d ", lp->bound - 1);
-                                                }
-                                                */
-                                                fprintf(filp, " - %d ", lp->bound - 1);
-                                                tcfg_edge_ctx_term(filp, e, cId << 1, num_context << 1,
+                                                    tcfg_edge_ctx_term(filp, e, cId << 1, num_context << 1,
                                                                 BP_NONE, NO_PREFIX, NO_SUFFIX);
+                                                }
                                         }
                                 fprintf(filp, " <= 0\n");
                                 total_cons++;
