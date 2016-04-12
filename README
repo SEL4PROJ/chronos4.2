@@ -1,3 +1,10 @@
+RELEASE NOTES FOR NICTA MODIFIED VERSION 4.2
+========================================
+This version of Chronos has been modified by NICTA (now Data61) to support the
+ARM architecture, and the iMX.31 processor in particular based on SimpleScalar/ARM. Please refer to the
+documentation of our WCET tools for how to use Chronos as part of that
+toolchain.
+
 RELEASE NOTES FOR PROTOTYPE VERSION 4.1
 =========================================
 This is a prototype release of Chronos with scope-aware data cache analysis.
